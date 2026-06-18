@@ -1549,8 +1549,17 @@ function calculate() {
       <div class="dasha-list">${dashaHtml}</div>
     `;
 
-    // 人類圖
-    const hd = calcHumanDesign(year, month, day, hour, minute);
+    // UTC 轉換（台灣固定 +08:00，未來可從出生地 lookup 動態帶入）
+    const timeZoneString = '+08:00';
+    const isoString = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:00${timeZoneString}`;
+    const birthDate = new Date(isoString);
+    const utcY = birthDate.getUTCFullYear();
+    const utcM = birthDate.getUTCMonth() + 1;
+    const utcD = birthDate.getUTCDate();
+    const utcH = birthDate.getUTCHours() + birthDate.getUTCMinutes() / 60;
+
+    // 人類圖（太陽黃道以 UTC 計算）
+    const hd = calcHumanDesign(utcY, utcM, utcD, utcH, 0);
     document.getElementById('hdInfo').innerHTML = `
       <div class="hd-display">
         <div class="hd-profile-card">
@@ -1589,13 +1598,12 @@ function calculate() {
       </div>
     `;
 
-    // 上升星座 & 十二宮
-    const birthHour = hour + minute / 60;
-    const ascLon = calcAscendant(year, month, day, birthHour, longitude, latitude);
+    // 上升星座 & 十二宮（UTC + 出生地經緯度）
+    const ascLon = calcAscendant(utcY, utcM, utcD, utcH, longitude, latitude);
     const ascIdx = Math.floor(ascLon / 30);
     const ascDeg = (ascLon % 30).toFixed(1);
     const ascSign = ZODIAC[ascIdx];
-    const placidus = calcPlacidusHouses(year, month, day, birthHour, longitude, latitude);
+    const placidus = calcPlacidusHouses(utcY, utcM, utcD, utcH, longitude, latitude);
     document.getElementById('risingInfo').innerHTML = `
       <div class="rising-display">
         <div class="rising-card">
