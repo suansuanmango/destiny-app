@@ -1288,8 +1288,7 @@ async function analyzeWithAI() {
   out.style.display = 'none';
 
   const r = _lastResult;
-  const currentYear = new Date().getFullYear();
-  const prompt = `你是精通東西方命理的整合顧問，請用繁體中文、溫暖直接的語氣分析以下命盤。
+  const prompt = `你是精通東西方命理的整合顧問，請用繁體中文分析以下命盤，並嚴格以 JSON 格式輸出，不要包含任何額外的對話或 Markdown 標記。
 
 ━━ 基本資料 ━━
 出生：${r.year}年${r.month}月${r.day}日 ${r.hour}時${r.minute}分｜性別：${r.gender === 'male' ? '男' : '女'}
@@ -1322,28 +1321,64 @@ Profile ${r.hdProfile}（${r.hdProfileZh}）：${r.hdProfileKey}
 
 ━━━━━━━━━━━━━━━━
 
-請輸出以下四個區塊（每區塊用 **【】** 標題，詳細充實，避免空話）：
+輸出格式（嚴格 JSON，不可有任何額外文字）：
+{
+  "resonance": ["主題名稱：多系統交叉點說明+對此人的意義（至少5條）"],
+  "astrology_2026": {
+    "natal": "太陽、月亮、上升本命意義（各2-3句）",
+    "transit": "2026木星/土星/天王對此命盤的具體影響與時間點"
+  },
+  "houses_2026": [
+    { "house": "第X宮", "theme": "主題", "analysis": "2-3句具體說明" }
+  ],
+  "actionable_advice": {
+    "lucky_numbers": "幸運數字 ${r.goodNums.join('、')} 的實際用法",
+    "directions": "最適方位（${r.goodDirList}）的具體應用",
+    "color": "從日主${r.dayMaster}五行和星座推導的幸運顏色",
+    "talent": "此命盤最突出的天賦或特殊徵象",
+    "top_3_todos": ["2026年最值得做的具體行動1", "行動2", "行動3"]
+  }
+}`;
 
-**【五大系統共鳴】**
-找出在八字、命卦、西洋占星、吠陀、人類圖中重複出現的主題（例如多系統指向「領導力」「直覺」「獨立」等），每個主題寫一條，格式：主題名稱：多系統交叉點說明 + 對這個人的意義。至少找出 4-5 個共鳴點。
-
-**【本命行星與 ${currentYear} 行運解析】**
-分析太陽、月亮、上升星座的本命意義（各 2-3 句），再說明 2026 年木星（在${r.jupSign}）、土星（在${r.satSign}）、天王（在${r.urSign}）對此命盤的具體影響與時間點。
-
-**【十二宮 ${currentYear} 年度重點】**
-針對以下最值得關注的宮位，各寫 2-3 句具體說明：
-${r.forecastHighlights ? r.forecastHighlights.split('；').map(s => '- ' + s).join('\n') : '- 整體平穩運行，無特別強烈行星影響'}
-另外，整體年度能量趨勢是什麼？最好把握什麼、最需謹慎什麼？
-
-**【具體行動建議】**
-- 幸運數字 ${r.goodNums.join('、')} 的實際用法
-- 生活中最適合的方位：${r.goodDirList}
-- 幸運顏色（從日主 ${r.dayMaster} 五行和星座推導）
-- 這個命盤最突出的天賦或特殊徵象
-- 2026 年最值得做的 3 件事（具體行動，不是空話）`;
+  function renderJSON(json) {
+    let html = '';
+    if (json.resonance?.length) {
+      html += '<div class="ai-section-title">五大系統共鳴</div>';
+      json.resonance.forEach(item => { html += `<div class="ai-bullet">${item}</div>`; });
+      html += '<br>';
+    }
+    if (json.astrology_2026) {
+      html += '<div class="ai-section-title">本命行星與 2026 行運解析</div>';
+      if (json.astrology_2026.natal)
+        html += `<div style="margin-bottom:8px">${json.astrology_2026.natal.replace(/\n/g,'<br>')}</div>`;
+      if (json.astrology_2026.transit)
+        html += `<div>${json.astrology_2026.transit.replace(/\n/g,'<br>')}</div>`;
+      html += '<br>';
+    }
+    if (json.houses_2026?.length) {
+      html += '<div class="ai-section-title">十二宮 2026 年度重點</div>';
+      json.houses_2026.forEach(h => {
+        html += `<div class="ai-bullet"><strong>${h.house}（${h.theme}）</strong>：${h.analysis}</div>`;
+      });
+      html += '<br>';
+    }
+    if (json.actionable_advice) {
+      const a = json.actionable_advice;
+      html += '<div class="ai-section-title">具體行動建議</div>';
+      if (a.lucky_numbers) html += `<div class="ai-bullet">🔢 ${a.lucky_numbers}</div>`;
+      if (a.directions)    html += `<div class="ai-bullet">🧭 ${a.directions}</div>`;
+      if (a.color)         html += `<div class="ai-bullet">🎨 ${a.color}</div>`;
+      if (a.talent)        html += `<div class="ai-bullet">✨ ${a.talent}</div>`;
+      if (a.top_3_todos?.length) {
+        html += '<div style="margin-top:8px;font-weight:600;font-size:0.88rem">2026 最值得做的 3 件事</div>';
+        a.top_3_todos.forEach((t, i) => { html += `<div class="ai-bullet">${i+1}. ${t}</div>`; });
+      }
+    }
+    return html;
+  }
 
   try {
-    let text;
+    let json;
     if (AI_MODE === 'claude') {
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -1361,30 +1396,28 @@ ${r.forecastHighlights ? r.forecastHighlights.split('；').map(s => '- ' + s).jo
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-      text = data.content?.[0]?.text || '無回應';
+      json = JSON.parse(data.content?.[0]?.text || '{}');
     } else {
       const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 3000 }
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 3000,
+              responseMimeType: 'application/json'
+            }
           })
         }
       );
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
-      text = data.candidates?.[0]?.content?.parts?.[0]?.text || '無回應';
+      json = JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text || '{}');
     }
-    const html = text
-      .replace(/\*\*【(.+?)】\*\*/g, '<div class="ai-section-title">$1</div>')
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/^[・•]\s*(.+)/gm, '<div class="ai-bullet">$1</div>')
-      .replace(/\n{2,}/g, '<br><br>')
-      .replace(/\n/g, '<br>');
-    out.innerHTML = `<div class="ai-content">${html}</div>`;
+    out.innerHTML = `<div class="ai-content">${renderJSON(json)}</div>`;
   } catch (e) {
     out.innerHTML = `<div style="color:var(--bad);font-size:0.88rem">分析失敗：${e.message}</div>`;
   }
