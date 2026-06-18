@@ -608,6 +608,14 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
       </div>
     </div>
 
+    <!-- AI 綜合分析 -->
+    <div class="result-section" id="aiSection" style="margin-top:6px">
+      <div class="section-title"><span>✨</span> AI 綜合命盤分析</div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px">整合所有命盤系統，AI 輸出：✦ 五大系統共鳴 ✦ 行星解析 ✦ 十二宮年運 ✦ 具體行動建議</p>
+      <button class="btn" id="analyzeBtn" onclick="analyzeWithAI()">分析我的命盤</button>
+      <div id="aiResult" style="display:none;margin-top:16px"></div>
+    </div>
+
     <!-- 折疊：東方命理 -->
     <details class="detail-section">
       <summary class="detail-summary"><span>☯</span> 東方命理</summary>
@@ -694,14 +702,6 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
         <div id="forecastInfo"></div>
       </div>
     </details>
-
-    <!-- AI 綜合分析 -->
-    <div class="result-section" id="aiSection" style="margin-top:6px">
-      <div class="section-title"><span>✨</span> AI 綜合命盤分析</div>
-      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px">整合所有命盤系統，AI 輸出：✦ 五大系統共鳴 ✦ 行星解析 ✦ 十二宮年運 ✦ 具體行動建議</p>
-      <button class="btn" id="analyzeBtn" onclick="analyzeWithAI()">分析我的命盤</button>
-      <div id="aiResult" style="display:none;margin-top:16px"></div>
-    </div>
 
   </div>
 </div>
@@ -1395,7 +1395,8 @@ Profile ${r.hdProfile}（${r.hdProfileZh}）：${r.hdProfileKey}
     if (json.houses_2026?.length) {
       html += '<div class="ai-section-title">十二宮 2026 年度重點</div>';
       json.houses_2026.forEach(h => {
-        html += `<div class="ai-bullet"><strong>${h.house}（${h.theme}）</strong>：${h.analysis}</div>`;
+        if (!h || typeof h !== 'object') return;
+        html += `<div class="ai-bullet"><strong>${h.house ?? '—'}（${h.theme ?? '—'}）</strong>：${h.analysis ?? '—'}</div>`;
       });
       html += '<br>';
     }
@@ -1479,11 +1480,31 @@ Profile ${r.hdProfile}（${r.hdProfileZh}）：${r.hdProfileKey}
   }
 
   const MAX_RETRIES = 2;
+  const LOADING_MSGS = [
+    '⏳ 正在精算天文星曆與真太陽時…',
+    '⏳ 正在對齊人類圖閘門與吠陀月宿…',
+    '⏳ AI 顧問正在整合東西方命理共鳴…',
+    '⏳ 即將完成，正在為您生成 2026 專屬建議…',
+  ];
+  const msgDiv = (txt) =>
+    `<div style="color:var(--text);opacity:0.55;font-size:0.88rem;padding:16px 0;text-align:center;line-height:1.8;">${txt}</div>`;
+
   let json = null;
+  let loadingTimer = null;
   out.style.display = 'block';
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    out.innerHTML = renderProgress(attempt, MAX_RETRIES);
+    if (attempt === 1) {
+      let msgIdx = 0;
+      out.innerHTML = msgDiv(LOADING_MSGS[0]);
+      loadingTimer = setInterval(() => {
+        msgIdx = (msgIdx + 1) % LOADING_MSGS.length;
+        out.innerHTML = msgDiv(LOADING_MSGS[msgIdx]);
+      }, 4000);
+    } else {
+      if (loadingTimer) { clearInterval(loadingTimer); loadingTimer = null; }
+      out.innerHTML = renderProgress(attempt, MAX_RETRIES);
+    }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10000);
     try {
@@ -1492,6 +1513,7 @@ Profile ${r.hdProfile}（${r.hdProfileZh}）：${r.hdProfileKey}
       break;
     } catch (e) {
       clearTimeout(timer);
+      if (loadingTimer) { clearInterval(loadingTimer); loadingTimer = null; }
       if (e.fatal) {
         out.innerHTML = renderError(e.message);
         json = null;
@@ -1508,6 +1530,7 @@ Profile ${r.hdProfile}（${r.hdProfileZh}）：${r.hdProfileKey}
       }
     }
   }
+  if (loadingTimer) { clearInterval(loadingTimer); loadingTimer = null; }
 
   if (json) out.innerHTML = `<div class="ai-content">${renderJSON(json)}</div>`;
   btn.textContent = '重新分析';
