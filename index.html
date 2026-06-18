@@ -1337,6 +1337,10 @@ Profile ${r.hdProfile}（${r.hdProfileZh}）：${r.hdProfileKey}
     "color": "從日主${r.dayMaster}五行和星座推導的幸運顏色",
     "talent": "此命盤最突出的天賦或特殊徵象",
     "top_3_todos": ["2026年最值得做的具體行動1", "行動2", "行動3"]
+  },
+  "strategy": {
+    "inward": "當下對內策略：根據命盤能量，此人現在應如何整頓內在、修煉自我、管理情緒與能量？2-3句具體建議。",
+    "outward": "當下對外策略：此人現在應如何與他人互動、拓展人脈、推進目標？哪些時機適合主動出擊、哪些需要等待？2-3句具體建議。"
   }
 }`;
 
@@ -1374,6 +1378,12 @@ Profile ${r.hdProfile}（${r.hdProfileZh}）：${r.hdProfileKey}
         a.top_3_todos.forEach((t, i) => { html += `<div class="ai-bullet">${i+1}. ${t}</div>`; });
       }
     }
+    if (json.strategy) {
+      const s = json.strategy;
+      html += '<br><div class="ai-section-title">當下策略</div>';
+      if (s.inward)  html += `<div class="ai-bullet"><strong>對內</strong>：${s.inward}</div>`;
+      if (s.outward) html += `<div class="ai-bullet"><strong>對外</strong>：${s.outward}</div>`;
+    }
     return html;
   }
 
@@ -1396,7 +1406,9 @@ Profile ${r.hdProfile}（${r.hdProfileZh}）：${r.hdProfileKey}
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-      json = JSON.parse(data.content?.[0]?.text || '{}');
+      const rawClaude = data.content?.[0]?.text || '{}';
+      try { json = JSON.parse(rawClaude); }
+      catch { throw new Error('Claude 回傳格式非 JSON，請重試'); }
     } else {
       const resp = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
@@ -1415,11 +1427,18 @@ Profile ${r.hdProfile}（${r.hdProfileZh}）：${r.hdProfileKey}
       );
       const data = await resp.json();
       if (data.error) throw new Error(data.error.message);
-      json = JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text || '{}');
+      const rawGemini = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+      try { json = JSON.parse(rawGemini); }
+      catch { throw new Error('Gemini 回傳格式非 JSON，請重試'); }
     }
     out.innerHTML = `<div class="ai-content">${renderJSON(json)}</div>`;
   } catch (e) {
-    out.innerHTML = `<div style="color:var(--bad);font-size:0.88rem">分析失敗：${e.message}</div>`;
+    out.innerHTML = `
+      <div style="background:rgba(220,53,69,0.08);border:1px solid var(--bad);border-radius:10px;padding:16px 18px;">
+        <div style="font-weight:700;color:var(--bad);margin-bottom:6px;">分析失敗</div>
+        <div style="font-size:0.85rem;color:var(--text);opacity:0.8;margin-bottom:12px;">${e.message}</div>
+        <button onclick="analyzeAI()" style="font-size:0.82rem;padding:5px 14px;border-radius:6px;border:1px solid var(--bad);background:transparent;color:var(--bad);cursor:pointer;">重試</button>
+      </div>`;
   }
   out.style.display = 'block';
   btn.textContent = '重新分析';
@@ -1507,10 +1526,24 @@ function calculate() {
       <div class="num-card"><div class="num-value">${num.attitude}</div><div class="num-label">態度數</div></div>
     `;
 
-    // 西洋星座 & 生肖
+    // UTC 轉換（未來將 "+08:00" 替換為使用者出生地的實際時區參數）
+    const timeZoneString = '+08:00';
+    const isoString = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:00${timeZoneString}`;
+    const birthDate = new Date(isoString);
+    const utcY = birthDate.getUTCFullYear();
+    const utcM = birthDate.getUTCMonth() + 1;
+    const utcD = birthDate.getUTCDate();
+    const utcH = birthDate.getUTCHours() + birthDate.getUTCMinutes() / 60;
+
+    // 所有 Meeus 天文星曆計算一律傳 UTC
+    const ved     = calcVedic(utcY, utcM, utcD, utcH);
+    const hd      = calcHumanDesign(utcY, utcM, utcD, utcH, 0);
+    const ascLon  = calcAscendant(utcY, utcM, utcD, utcH, longitude, latitude);
+    const placidus = calcPlacidusHouses(utcY, utcM, utcD, utcH, longitude, latitude);
+
+    // 西洋星座 & 生肖（不依賴時間）
     const sun = getSunSign(month, day);
     const ani = getChineseZodiac(year, month, day);
-    const ved = calcVedic(year, month, day, hour);
     document.getElementById('zodiacInfo').innerHTML = `
       <div class="zodiac-row">
         <div class="zodiac-symbol">${sun.sym}</div>
@@ -1549,17 +1582,7 @@ function calculate() {
       <div class="dasha-list">${dashaHtml}</div>
     `;
 
-    // UTC 轉換（台灣固定 +08:00，未來可從出生地 lookup 動態帶入）
-    const timeZoneString = '+08:00';
-    const isoString = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:00${timeZoneString}`;
-    const birthDate = new Date(isoString);
-    const utcY = birthDate.getUTCFullYear();
-    const utcM = birthDate.getUTCMonth() + 1;
-    const utcD = birthDate.getUTCDate();
-    const utcH = birthDate.getUTCHours() + birthDate.getUTCMinutes() / 60;
-
-    // 人類圖（太陽黃道以 UTC 計算）
-    const hd = calcHumanDesign(utcY, utcM, utcD, utcH, 0);
+    // 人類圖
     document.getElementById('hdInfo').innerHTML = `
       <div class="hd-display">
         <div class="hd-profile-card">
@@ -1598,12 +1621,10 @@ function calculate() {
       </div>
     `;
 
-    // 上升星座 & 十二宮（UTC + 出生地經緯度）
-    const ascLon = calcAscendant(utcY, utcM, utcD, utcH, longitude, latitude);
+    // 上升星座 & 十二宮
     const ascIdx = Math.floor(ascLon / 30);
     const ascDeg = (ascLon % 30).toFixed(1);
     const ascSign = ZODIAC[ascIdx];
-    const placidus = calcPlacidusHouses(utcY, utcM, utcD, utcH, longitude, latitude);
     document.getElementById('risingInfo').innerHTML = `
       <div class="rising-display">
         <div class="rising-card">
