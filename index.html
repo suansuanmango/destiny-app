@@ -1055,8 +1055,34 @@ function getHDGateAndLine(sunLon) {
   const pos = Math.floor(offsetLon / gateWidth) % 64;
   const gate = HD_GATES[pos];
   const posInGate = (offsetLon % gateWidth) / gateWidth;
-  const line = Math.min(6, Math.floor(posInGate * 6) + 1);
-  return { gate, line };
+  const lineIdx = Math.floor(posInGate * 6);
+  const line = Math.min(6, lineIdx + 1);
+  const posInLine = (posInGate * 6) - lineIdx;
+  return { gate, line, pos, posInLine };
+}
+
+// 閾值：0.2° / 0.9375°（單爻寬度）= 0.2133
+const CUSP_THRESHOLD = 0.2133;
+
+function buildCuspText(label, gate, line, posInLine, pos) {
+  const isDigitOne = label === '意識太陽' || label === '意識地球';
+  const digitStr = isDigitOne ? '一' : '二';
+  const prevGate = HD_GATES[(pos - 1 + 64) % 64];
+  const nextGate = HD_GATES[(pos + 1) % 64];
+
+  if (line === 1 && posInLine < CUSP_THRESHOLD) {
+    return `⚠️【${label}】落在閘門 ${prevGate} 第6爻與閘門 ${gate} 第1爻的交界。請說明這兩個閘門的核心差異，以及人生角色第${digitStr}數字可能為 6 或 1 的性格差異。禁止暗示此人同時具備兩個閘門的天賦，或提及任何本命盤中未被通道啟動的閘門。`;
+  }
+  if (line === 6 && posInLine > (1 - CUSP_THRESHOLD)) {
+    return `⚠️【${label}】落在閘門 ${gate} 第6爻與閘門 ${nextGate} 第1爻的交界。請說明這兩個閘門的核心差異，以及人生角色第${digitStr}數字可能為 6 或 1 的性格差異。禁止暗示此人同時具備兩個閘門的天賦，或提及任何本命盤中未被通道啟動的閘門。`;
+  }
+  if (posInLine < CUSP_THRESHOLD) {
+    return `⚠️【${label}】落在閘門 ${gate} 第${line - 1}爻與第${line}爻的交界。請僅說明這兩爻在人生角色中的特質差異，不涉及閘門編號的任何改變。禁止提及相鄰閘門或任何閘門天賦變化。`;
+  }
+  if (posInLine > (1 - CUSP_THRESHOLD)) {
+    return `⚠️【${label}】落在閘門 ${gate} 第${line}爻與第${line + 1}爻的交界。請僅說明這兩爻在人生角色中的特質差異，不涉及閘門編號的任何改變。禁止提及相鄰閘門或任何閘門天賦變化。`;
+  }
+  return '';
 }
 
 const HD_PROFILES = {
@@ -1102,10 +1128,17 @@ function calcHumanDesign(year, month, day, hour, minute) {
   const desEarthLon = (desSunLon + 180) % 360;
   const desEarth = getHDGateAndLine(desEarthLon);
 
+  const cuspPersSun   = buildCuspText('意識太陽',   persSun.gate,   persSun.line,   persSun.posInLine,   persSun.pos);
+  const cuspPersEarth = buildCuspText('意識地球',   persEarth.gate, persEarth.line, persEarth.posInLine, persEarth.pos);
+  const cuspDesSun    = buildCuspText('潛意識太陽', desSun.gate,    desSun.line,    desSun.posInLine,    desSun.pos);
+  const cuspDesEarth  = buildCuspText('潛意識地球', desEarth.gate,  desEarth.line,  desEarth.posInLine,  desEarth.pos);
+  const cuspText = [cuspPersSun, cuspPersEarth, cuspDesSun, cuspDesEarth].filter(Boolean).join(' ');
+  const profileHasCusp = !!(cuspPersSun || cuspDesSun);
+
   const profileKey = `${persSun.line}/${desSun.line}`;
   const profile = HD_PROFILES[profileKey] || { zh: '特殊組合', key: '請至完整人類圖工具查詢' };
   const crossType = persSun.line <= 3 ? '右角度交叉' : '左角度交叉';
-  return { persSun, persEarth, desSun, desEarth, profileKey, profile, crossType };
+  return { persSun, persEarth, desSun, desEarth, profileKey, profile, crossType, cuspText, profileHasCusp };
 }
 
 // ── 城市座標（台灣22縣市，含緯度）──
@@ -1313,7 +1346,7 @@ async function analyzeWithAI() {
 Profile ${r.hdProfile}（${r.hdProfileZh}）：${r.hdProfileKey}
 輪迴交叉類型：${r.hdCrossType}
 四閘門：意識太陽 ${r.hdGatePers}・意識地球 ${r.hdGateEarthPers}・潛意識太陽 ${r.hdGateDes}・潛意識地球 ${r.hdGateEarthDes}
-（請根據這四個閘門，推斷可能的輪迴交叉主題與人生使命，並推測 HD 類型）
+（請根據這四個閘門，推斷可能的輪迴交叉主題與人生使命，並推測 HD 類型）${r.hdCuspText ? '\n' + r.hdCuspText : ''}
 
 ━━ 2026 行星過境 ━━
 木星現在在${r.jupSign}座｜土星在${r.satSign}座｜天王星在${r.urSign}座
@@ -1622,7 +1655,7 @@ function calculate() {
     document.getElementById('hdInfo').innerHTML = `
       <div class="hd-display">
         <div class="hd-profile-card">
-          <div class="hd-profile-num">${hd.profileKey}</div>
+          <div class="hd-profile-num">${hd.profileKey}${hd.profileHasCusp ? ' <span style="font-size:0.7rem;background:rgba(255,193,7,0.15);color:#b8860b;border:1px solid #e6c200;border-radius:4px;padding:1px 5px;vertical-align:middle;">邊界</span>' : ''}</div>
           <div class="hd-profile-zh">${hd.profile.zh}</div>
           <div class="hd-profile-key">${hd.profile.key}</div>
         </div>
@@ -1757,7 +1790,7 @@ function calculate() {
       hdGateEarthPers: hd.persEarth.gate,
       hdGateDes: hd.desSun.gate, hdLineDes: hd.desSun.line,
       hdGateEarthDes: hd.desEarth.gate,
-      hdCrossType: hd.crossType,
+      hdCrossType: hd.crossType, hdCuspText: hd.cuspText,
       ascSign: ascSign.name, ascDeg: ascLon.toFixed(1),
       jupSign: SIGN_NAMES[fc.jupIdx], satSign: SIGN_NAMES[fc.satIdx], urSign: SIGN_NAMES[fc.urIdx],
       sunSignIdx, forecastHighlights: fc.rows.filter(r => r.rating >= 5 || r.rating <= 2)
