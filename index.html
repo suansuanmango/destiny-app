@@ -302,7 +302,7 @@ input:focus, select:focus {
 }
 .summary-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 10px;
   margin-bottom: 20px;
 }
@@ -444,12 +444,71 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
 .dasha-planet { font-weight: 600; color: var(--primary); }
 .dasha-period { color: var(--muted); font-size: 0.76rem; text-align: right; }
 
+/* ── 上升星座 & 十二宮 ── */
+.rising-display { display: flex; flex-direction: column; gap: 14px; }
+.rising-card {
+  background: linear-gradient(135deg, #f0eaf8, #e8dff5);
+  border-radius: 14px; padding: 20px; text-align: center;
+}
+.rising-sym { font-size: 2.4rem; line-height: 1; margin-bottom: 6px; }
+.rising-name { font-family: 'Noto Serif TC', serif; font-size: 1.4rem; font-weight: 700; color: #5a3a7a; }
+.rising-sub { font-size: 0.82rem; color: #7a6388; margin-top: 6px; line-height: 1.6; }
+.house-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.house-item {
+  background: var(--light); border-radius: 10px; padding: 10px 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.house-num {
+  font-family: 'Noto Serif TC', serif; font-size: 0.78rem;
+  color: var(--muted); white-space: nowrap; min-width: 32px;
+}
+.house-sign { font-size: 0.88rem; font-weight: 600; color: var(--primary); }
+.house-theme { font-size: 0.72rem; color: var(--muted); }
+
+/* ── 年度運勢表 ── */
+.forecast-header { text-align: center; margin-bottom: 14px; }
+.forecast-title { font-family: 'Noto Serif TC', serif; font-size: 1rem; font-weight: 700; color: var(--primary); }
+.forecast-subtitle { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+.forecast-planet-row {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.forecast-planet-badge {
+  background: var(--light); border-radius: 20px; padding: 5px 12px;
+  font-size: 0.8rem; color: var(--primary);
+}
+.forecast-table { display: flex; flex-direction: column; gap: 6px; }
+.forecast-row {
+  display: grid; grid-template-columns: 56px 48px auto 1fr;
+  gap: 8px; align-items: center;
+  background: var(--light); border-radius: 8px; padding: 10px 12px;
+  font-size: 0.82rem;
+}
+.forecast-row.highlight { background: #e8f5e9; border-left: 3px solid var(--good); }
+.forecast-row.challenge { background: #fff8f3; border-left: 3px solid var(--accent); }
+.f-house { font-size: 0.72rem; color: var(--muted); }
+.f-theme { font-weight: 600; color: var(--primary); }
+.f-stars { color: var(--accent); letter-spacing: 2px; font-size: 0.78rem; }
+.f-note { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+
+/* ── 輪迴交叉 ── */
+.hd-cross {
+  background: linear-gradient(135deg, #f8f3ec, #ede5d8);
+  border-radius: 10px; padding: 14px; text-align: center;
+}
+.hd-cross-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
+.hd-cross-type { font-family: 'Noto Serif TC', serif; font-size: 1rem; font-weight: 700; color: var(--primary); }
+.hd-cross-gates { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+
 @media (max-width: 480px) {
   .form-grid { grid-template-columns: 1fr; }
   .pillars { grid-template-columns: repeat(4, 1fr); gap: 6px; }
   .pillar-chars { font-size: 1.2rem; }
   .directions-grid { grid-template-columns: 1fr; }
   .summary-grid { grid-template-columns: 1fr 1fr; }
+  .forecast-row { grid-template-columns: 48px 36px auto 1fr; }
+  .house-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -487,29 +546,29 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
       </div>
       <div class="form-group">
         <label>出生地</label>
-        <select id="longitude">
-          <option value="121.74">基隆市</option>
-          <option value="121.55">台北市</option>
-          <option value="121.45">新北市</option>
-          <option value="121.30">桃園市</option>
-          <option value="120.97">新竹市</option>
-          <option value="121.00">新竹縣</option>
-          <option value="120.82">苗栗縣</option>
-          <option value="120.68" selected>台中市</option>
-          <option value="120.54">彰化縣</option>
-          <option value="120.68">南投縣</option>
-          <option value="120.54">雲林縣</option>
-          <option value="120.45">嘉義市</option>
-          <option value="120.57">嘉義縣</option>
-          <option value="120.20">台南市</option>
-          <option value="120.32">高雄市</option>
-          <option value="120.49">屏東縣</option>
-          <option value="121.15">台東縣</option>
-          <option value="121.60">花蓮縣</option>
-          <option value="121.75">宜蘭縣</option>
-          <option value="119.57">澎湖縣</option>
-          <option value="118.32">金門縣</option>
-          <option value="119.96">連江縣（馬祖）</option>
+        <select id="city">
+          <option value="基隆市">基隆市</option>
+          <option value="台北市">台北市</option>
+          <option value="新北市">新北市</option>
+          <option value="桃園市">桃園市</option>
+          <option value="新竹市">新竹市</option>
+          <option value="新竹縣">新竹縣</option>
+          <option value="苗栗縣">苗栗縣</option>
+          <option value="台中市" selected>台中市</option>
+          <option value="彰化縣">彰化縣</option>
+          <option value="南投縣">南投縣</option>
+          <option value="雲林縣">雲林縣</option>
+          <option value="嘉義市">嘉義市</option>
+          <option value="嘉義縣">嘉義縣</option>
+          <option value="台南市">台南市</option>
+          <option value="高雄市">高雄市</option>
+          <option value="屏東縣">屏東縣</option>
+          <option value="台東縣">台東縣</option>
+          <option value="花蓮縣">花蓮縣</option>
+          <option value="宜蘭縣">宜蘭縣</option>
+          <option value="澎湖縣">澎湖縣</option>
+          <option value="金門縣">金門縣</option>
+          <option value="連江縣（馬祖）">連江縣（馬祖）</option>
         </select>
       </div>
 
@@ -536,6 +595,8 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
       <div class="summary-grid">
         <div class="summary-item"><div class="summary-label">太陽星座</div><div class="summary-value" id="sumSun">—</div></div>
         <div class="summary-item"><div class="summary-label">月亮星座</div><div class="summary-value" id="sumMoon">—</div></div>
+        <div class="summary-item"><div class="summary-label">上升星座</div><div class="summary-value" id="sumAsc">—</div></div>
+        <div class="summary-item"><div class="summary-label">HD Profile</div><div class="summary-value" id="sumHDProfile">—</div></div>
         <div class="summary-item"><div class="summary-label">生命靈數</div><div class="summary-value" id="sumLifePath">—</div></div>
         <div class="summary-item"><div class="summary-label">生肖</div><div class="summary-value" id="sumAnimal">—</div></div>
         <div class="summary-item"><div class="summary-label">命卦</div><div class="summary-value" id="sumTrigram">—</div></div>
@@ -615,6 +676,22 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
       <summary class="detail-summary"><span>◈</span> 人類圖 Profile</summary>
       <div class="detail-body">
         <div id="hdInfo"></div>
+      </div>
+    </details>
+
+    <!-- 折疊：上升星座 & 十二宮 -->
+    <details class="detail-section">
+      <summary class="detail-summary"><span>🌅</span> 上升星座 & 十二宮</summary>
+      <div class="detail-body">
+        <div id="risingInfo"></div>
+      </div>
+    </details>
+
+    <!-- 折疊：年度運勢 -->
+    <details class="detail-section">
+      <summary class="detail-summary"><span>📅</span> 2026 年度運勢（十二宮）</summary>
+      <div class="detail-body">
+        <div id="forecastInfo"></div>
       </div>
     </details>
 
@@ -1018,9 +1095,101 @@ function calcHumanDesign(year, month, day, hour, minute) {
   const desSunLon = getSunLongitude(desDate.year, desDate.month, desDate.day, desDate.hour);
   const desSun = getHDGateAndLine(desSunLon);
 
+  const persEarthLon = (persSunLon + 180) % 360;
+  const persEarth = getHDGateAndLine(persEarthLon);
+  const desEarthLon = (desSunLon + 180) % 360;
+  const desEarth = getHDGateAndLine(desEarthLon);
+
   const profileKey = `${persSun.line}/${desSun.line}`;
   const profile = HD_PROFILES[profileKey] || { zh: '特殊組合', key: '請至完整人類圖工具查詢' };
-  return { persSun, desSun, profileKey, profile };
+  const crossType = persSun.line <= 3 ? '右角度交叉' : '左角度交叉';
+  return { persSun, persEarth, desSun, desEarth, profileKey, profile, crossType };
+}
+
+// ── 城市座標（台灣22縣市，含緯度）──
+const CITY_DATA = {
+  '基隆市':     { lon:121.74, lat:25.13 }, '台北市': { lon:121.55, lat:25.05 },
+  '新北市':     { lon:121.45, lat:25.01 }, '桃園市': { lon:121.30, lat:24.99 },
+  '新竹市':     { lon:120.97, lat:24.80 }, '新竹縣': { lon:121.00, lat:24.85 },
+  '苗栗縣':     { lon:120.82, lat:24.56 }, '台中市': { lon:120.68, lat:24.15 },
+  '彰化縣':     { lon:120.54, lat:24.05 }, '南投縣': { lon:120.68, lat:23.96 },
+  '雲林縣':     { lon:120.54, lat:23.71 }, '嘉義市': { lon:120.45, lat:23.48 },
+  '嘉義縣':     { lon:120.57, lat:23.46 }, '台南市': { lon:120.20, lat:22.99 },
+  '高雄市':     { lon:120.32, lat:22.62 }, '屏東縣': { lon:120.49, lat:22.67 },
+  '台東縣':     { lon:121.15, lat:22.75 }, '花蓮縣': { lon:121.60, lat:23.99 },
+  '宜蘭縣':     { lon:121.75, lat:24.70 }, '澎湖縣': { lon:119.57, lat:23.57 },
+  '金門縣':     { lon:118.32, lat:24.43 }, '連江縣（馬祖）': { lon:119.96, lat:26.17 },
+};
+
+// ── 星座常數 ──
+const SIGN_NAMES = ['牡羊','金牛','雙子','巨蟹','獅子','處女','天秤','天蠍','射手','摩羯','水瓶','雙魚'];
+const SIGN_SYMS  = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+
+// ── 上升星座計算（GMST → LST → 黃道地平）──
+function calcAscendant(year, month, day, hour, longitude, latitude) {
+  const JD = julday(year, month, day, hour);
+  const T  = (JD - 2451545.0) / 36525.0;
+  const theta0 = 280.46061837 + 360.98564736629 * (JD - 2451545.0) + 0.000387933 * T * T;
+  const GMST = ((theta0 % 360) + 360) % 360;
+  const LST  = ((GMST + longitude) % 360 + 360) % 360;
+  const r    = Math.PI / 180;
+  const eps  = (23.4392911 - 0.0130042 * T) * r;
+  const phi  = latitude * r;
+  const RAMC = LST * r;
+  let asc = Math.atan2(-Math.cos(RAMC), Math.sin(eps) * Math.tan(phi) + Math.cos(eps) * Math.sin(RAMC)) / r;
+  return (asc % 360 + 360) % 360;
+}
+
+// ── 行星黃道位置（Meeus 簡化 VSOP87，~2° 精度）──
+const PLANET_EL = {
+  Jupiter: { L0:34.3515,  L1:3034.9057, e:0.0489, w0:14.33,  w1:0.1507 },
+  Saturn:  { L0:50.0774,  L1:1222.1138, e:0.0557, w0:93.06,  w1:0.3395 },
+  Uranus:  { L0:314.0550, L1:428.4882,  e:0.0472, w0:173.01, w1:0.0   },
+};
+function getPlanetLon(planet, year, month, day, hour) {
+  const JD = julday(year, month, day, hour);
+  const T  = (JD - 2451545.0) / 36525.0;
+  const r  = Math.PI / 180;
+  const d  = PLANET_EL[planet];
+  const L  = ((d.L0 + d.L1 * T) % 360 + 360) % 360;
+  const w  = d.w0 + d.w1 * T;
+  const M  = ((L - w) % 360 + 360) % 360;
+  const C  = (180 / Math.PI) * ((2 * d.e - d.e ** 3 / 4) * Math.sin(M * r) + 1.25 * d.e ** 2 * Math.sin(2 * M * r));
+  return ((w + M + C) % 360 + 360) % 360;
+}
+
+// ── 十二宮主題（Whole Sign）──
+const HOUSE_THEMES = [
+  '自我 / 外表', '財務 / 價值', '溝通 / 學習', '家庭 / 根源',
+  '創意 / 戀愛', '健康 / 工作', '婚姻 / 合作', '轉化 / 共財',
+  '哲學 / 旅行', '事業 / 名聲', '人脈 / 理想', '靈性 / 隱藏',
+];
+
+// ── 2026 年度行星過境預測（太陽宮位制）──
+function calc2026Forecast(sunSignIdx) {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth()+1, dd = now.getDate();
+  const jupLon = getPlanetLon('Jupiter', y, m, dd, 12);
+  const satLon = getPlanetLon('Saturn',  y, m, dd, 12);
+  const urLon  = getPlanetLon('Uranus',  y, m, dd, 12);
+  const jupIdx = Math.floor(jupLon / 30);
+  const satIdx = Math.floor(satLon / 30);
+  const urIdx  = Math.floor(urLon / 30);
+
+  const rows = HOUSE_THEMES.map((theme, i) => {
+    const hSign = (sunSignIdx + i) % 12;
+    const notes = [];
+    let rating = 3;
+    if (jupIdx === hSign) { notes.push('木星加持★'); rating += 2; }
+    if (satIdx === hSign) { notes.push('土星考驗');   rating -= 1; }
+    if (urIdx  === hSign) { notes.push('天王激變⚡');  rating += 1; }
+    rating = Math.max(1, Math.min(5, rating));
+    const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+    const cls = rating >= 5 ? 'highlight' : (rating <= 2 ? 'challenge' : '');
+    return { num: i+1, theme, notes: notes.join(' | ') || '平穩', stars, rating, cls,
+             signName: SIGN_NAMES[hSign], signSym: SIGN_SYMS[hSign] };
+  });
+  return { rows, jupLon, satLon, urLon, jupIdx, satIdx, urIdx };
 }
 
 // ── AI 整合分析 ──
@@ -1039,65 +1208,58 @@ async function analyzeWithAI() {
 
   const r = _lastResult;
   const currentYear = new Date().getFullYear();
-  const prompt = `你是一位精通東西方命理的整合顧問，擅長從多個系統中找出共同脈絡，給出深度且實用的人生解讀。請用繁體中文，以溫暖、直接、像朋友說話的語氣分析以下命盤。
+  const prompt = `你是精通東西方命理的整合顧問，請用繁體中文、溫暖直接的語氣分析以下命盤。
 
 ━━ 基本資料 ━━
-出生：${r.year}年${r.month}月${r.day}日 ${r.hour}時${r.minute}分
-性別：${r.gender === 'male' ? '男' : '女'}性
-當前年份：${currentYear} 年
+出生：${r.year}年${r.month}月${r.day}日 ${r.hour}時${r.minute}分｜性別：${r.gender === 'male' ? '男' : '女'}
 
-━━ 東方命理 — 八字四柱 ━━
+━━ 八字 ━━
 年柱 ${r.yearP} ｜ 月柱 ${r.monthP} ｜ 日柱 ${r.dayP} ｜ 時柱 ${r.hourP}
-日主（代表本人）：${r.dayMaster}，請分析日主五行屬性與強弱，及四柱間的五行平衡。
-農曆：${r.lunar}
-生肖：${r.animal}
+日主：${r.dayMaster}（本人代表）｜農曆：${r.lunar}｜生肖：${r.animal}
 
-━━ 東方命理 — 八宅命卦 ━━
-命卦：${r.lifeTrigram}卦（${r.trigramCat}）
-四吉方：${r.goodDirList}
-四凶方：${r.badDirList}
+━━ 命卦 ━━ ${r.lifeTrigram}卦（${r.trigramCat}）
+四吉方：${r.goodDirList} ｜ 四凶方：${r.badDirList}
 
 ━━ 西洋占星 ━━
-太陽星座：${r.sunSign}（${r.sunEl}象）— ${r.sunKey}
-月亮星座：${r.moonSign}（${r.moonEl}象）— ${r.moonKey}
+太陽：${r.sunSign}（${r.sunEl}象）　月亮：${r.moonSign}（${r.moonEl}象）　上升：${r.ascSign}（${r.ascDeg}°）
 
-━━ 吠陀占星（Jyotish）━━
-月宿（Nakshatra）：${r.nakshatra}（${r.nakshatraEn}）
-月宿守護星：${r.nakshatraPlanet}
-月宿關鍵字：${r.nakshatraKey}
-目前 Dasha 大運：${r.dasha}，持續至 ${r.dashaEnd} 年
+━━ 吠陀占星 ━━
+月宿：${r.nakshatra}（${r.nakshatraEn}）｜守護星：${r.nakshatraPlanet}｜${r.nakshatraKey}
+目前 Dasha：${r.dasha}，至 ${r.dashaEnd} 年
 
-━━ 生命靈數 ━━
-生命數：${r.lifePath}（人生使命與道路）
-個性數：${r.birthday}（天生個性特質）
-態度數：${r.attitude}（對外表現方式）
+━━ 生命靈數 ━━ 生命數 ${r.lifePath}｜個性數 ${r.birthday}｜態度數 ${r.attitude}
 
-━━ 東方靈數 ━━
-好的數字：${r.goodNums.join('、')}
-要避開的數字：${r.badNums.join('、')}
+━━ 人類圖 ━━
+Profile ${r.hdProfile}（${r.hdProfileZh}）：${r.hdProfileKey}
+輪迴交叉類型：${r.hdCrossType}
+四閘門：意識太陽 ${r.hdGatePers}・意識地球 ${r.hdGateEarthPers}・潛意識太陽 ${r.hdGateDes}・潛意識地球 ${r.hdGateEarthDes}
+（請根據這四個閘門，推斷可能的輪迴交叉主題與人生使命，並推測 HD 類型）
 
-━━ 人類圖 Profile ━━
-Profile：${r.hdProfile}（${r.hdProfileZh}）
-核心特質：${r.hdProfileKey}
-意識太陽：閘門 ${r.hdGatePers}・第 ${r.hdLinePers} 爻 ／ 潛意識太陽：閘門 ${r.hdGateDes}・第 ${r.hdLineDes} 爻
+━━ 2026 行星過境 ━━
+木星現在在${r.jupSign}座｜土星在${r.satSign}座｜天王星在${r.urSign}座
+本年度關鍵宮位：${r.forecastHighlights || '整體平穩'}
 
 ━━━━━━━━━━━━━━━━
 
-請按以下三個部分進行深度分析，每部分要夠詳細充實，語氣直接有溫度，避免空話套話：
+請輸出以下四個區塊（每區塊用 **【】** 標題，詳細充實，避免空話）：
 
-**【核心特質】**
-橫跨所有系統，找出重複出現的主題（例如多個系統都指向創意、領導力、情感等），說明這個人的本質天賦、人格底層邏輯、在人際關係中的角色定位，以及可能的成長挑戰或盲點。
+**【五大系統共鳴】**
+找出在八字、命卦、西洋占星、吠陀、人類圖中重複出現的主題（例如多系統指向「領導力」「直覺」「獨立」等），每個主題寫一條，格式：主題名稱：多系統交叉點說明 + 對這個人的意義。至少找出 4-5 個共鳴點。
 
-**【目前運勢（${currentYear} 年）】**
-結合目前的 Dasha 大運（${r.dasha}，至 ${r.dashaEnd} 年）與當前時機，說明：現在是什麼能量在主導？哪些事情順勢而為、哪些要暫緩？這段時期的人生功課是什麼？有沒有特別值得把握的機會？
+**【本命行星與 ${currentYear} 行運解析】**
+分析太陽、月亮、上升星座的本命意義（各 2-3 句），再說明 2026 年木星（在${r.jupSign}）、土星（在${r.satSign}）、天王（在${r.urSign}）對此命盤的具體影響與時間點。
 
-**【建議與亮點】**
-給出具體可操作的建議，包括：
-- 幸運數字 ${r.goodNums.join('、')} 的實際使用方式（手機號、密碼、日期、車牌選號建議）
-- 幸運方位（根據四吉方：${r.goodDirList}）的生活應用
-- 幸運顏色（根據日主五行 ${r.dayMaster} 和星座屬性推導）
-- 要特別注意或小心的事（凶方、避開的數字、這段運勢的雷區）
-- 命盤中有沒有特別突出的天賦或特殊徵象，值得特別說明`;
+**【十二宮 ${currentYear} 年度重點】**
+針對以下最值得關注的宮位，各寫 2-3 句具體說明：
+${r.forecastHighlights ? r.forecastHighlights.split('；').map(s => '- ' + s).join('\n') : '- 整體平穩運行，無特別強烈行星影響'}
+另外，整體年度能量趨勢是什麼？最好把握什麼、最需謹慎什麼？
+
+**【具體行動建議】**
+- 幸運數字 ${r.goodNums.join('、')} 的實際用法
+- 生活中最適合的方位：${r.goodDirList}
+- 幸運顏色（從日主 ${r.dayMaster} 五行和星座推導）
+- 這個命盤最突出的天賦或特殊徵象
+- 2026 年最值得做的 3 件事（具體行動，不是空話）`;
 
   try {
     const resp = await fetch(
@@ -1137,7 +1299,8 @@ function calculate() {
   const day      = parseInt(document.getElementById('day').value);
   const hour     = parseInt(document.getElementById('hour').value);
   const minute   = parseInt(document.getElementById('minute').value) || 0;
-  const longitude= parseFloat(document.getElementById('longitude').value);
+  const cityName = document.getElementById('city').value;
+  const { lon: longitude, lat: latitude } = CITY_DATA[cityName] || { lon: 120.68, lat: 24.15 };
   const gender   = document.querySelector('input[name="gender"]:checked').value;
   const errBox   = document.getElementById('error');
   errBox.style.display = 'none';
@@ -1267,18 +1430,87 @@ function calculate() {
             <div class="hd-gate-line">第 ${hd.persSun.line} 爻・${HD_LINE_NAMES[hd.persSun.line]}</div>
           </div>
           <div class="hd-gate-item">
+            <div class="hd-gate-type">意識地球（出生）</div>
+            <div class="hd-gate-val">閘門 ${hd.persEarth.gate}</div>
+            <div class="hd-gate-line">第 ${hd.persEarth.line} 爻</div>
+          </div>
+          <div class="hd-gate-item">
             <div class="hd-gate-type">潛意識太陽（設計）</div>
             <div class="hd-gate-val">閘門 ${hd.desSun.gate}</div>
             <div class="hd-gate-line">第 ${hd.desSun.line} 爻・${HD_LINE_NAMES[hd.desSun.line]}</div>
           </div>
+          <div class="hd-gate-item">
+            <div class="hd-gate-type">潛意識地球（設計）</div>
+            <div class="hd-gate-val">閘門 ${hd.desEarth.gate}</div>
+            <div class="hd-gate-line">第 ${hd.desEarth.line} 爻</div>
+          </div>
         </div>
-        <div class="hd-note">人類圖的類型（Type）、權威（Authority）與通道（Channel）需完整星曆才能計算。建議至 jovianarchive.com 輸入精確出生地取得完整盤面。</div>
+        <div class="hd-cross">
+          <div class="hd-cross-label">${hd.crossType}｜輪迴交叉</div>
+          <div class="hd-cross-type">閘門 ${hd.persSun.gate} · ${hd.persEarth.gate} · ${hd.desSun.gate} · ${hd.desEarth.gate}</div>
+          <div class="hd-cross-gates">完整交叉名稱請至 <a href="https://jovianarchive.com" target="_blank" style="color:var(--accent)">jovianarchive.com</a> 查詢</div>
+        </div>
+        <div class="hd-note">HD 類型（顯示者／生產者等）與通道（Channel）需全行星星曆確認，建議至上方連結取得完整盤面。</div>
       </div>
+    `;
+
+    // 上升星座 & 十二宮
+    const birthHour = hour + minute / 60;
+    const ascLon = calcAscendant(year, month, day, birthHour, longitude, latitude);
+    const ascIdx = Math.floor(ascLon / 30);
+    const ascDeg = (ascLon % 30).toFixed(1);
+    const ascSign = ZODIAC[ascIdx];
+    const houses = Array.from({length:12}, (_, i) => (ascIdx + i) % 12);
+    document.getElementById('risingInfo').innerHTML = `
+      <div class="rising-display">
+        <div class="rising-card">
+          <div class="rising-sym">${ascSign.sym}</div>
+          <div class="rising-name">上升 ${ascSign.name}</div>
+          <div class="rising-sub">${ascDeg}° ${ascSign.name} ｜ ${ascSign.el}象星座<br>${ascSign.key}</div>
+        </div>
+        <div class="detail-sub-title" style="margin-bottom:0">十二宮位置（整宮制）</div>
+        <div class="house-grid">
+          ${houses.map((sIdx, i) => `
+            <div class="house-item">
+              <div class="house-num">第 ${i+1} 宮</div>
+              <div>
+                <div class="house-sign">${SIGN_SYMS[sIdx]} ${SIGN_NAMES[sIdx]}座</div>
+                <div class="house-theme">${HOUSE_THEMES[i]}</div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+    `;
+
+    // 年度運勢（太陽宮位制）
+    const sunSignIdx = ZODIAC.indexOf(sun);
+    const fc = calc2026Forecast(sunSignIdx);
+    const planetBadges = [
+      `木星 ${SIGN_SYMS[fc.jupIdx]}${SIGN_NAMES[fc.jupIdx]}（${fc.jupLon.toFixed(0)}°）`,
+      `土星 ${SIGN_SYMS[fc.satIdx]}${SIGN_NAMES[fc.satIdx]}（${fc.satLon.toFixed(0)}°）`,
+      `天王 ${SIGN_SYMS[fc.urIdx]}${SIGN_NAMES[fc.urIdx]}（${fc.urLon.toFixed(0)}°）`,
+    ].map(t => `<div class="forecast-planet-badge">${t}</div>`).join('');
+    const rows = fc.rows.map(r => `
+      <div class="forecast-row ${r.cls}">
+        <div class="f-house">第${r.num}宮</div>
+        <div class="f-theme">${r.theme.split('/')[0].trim()}</div>
+        <div class="f-stars">${r.stars}</div>
+        <div class="f-note">${r.notes}</div>
+      </div>`).join('');
+    document.getElementById('forecastInfo').innerHTML = `
+      <div class="forecast-header">
+        <div class="forecast-title">2026 年 ${sun.name} 十二宮年度運勢</div>
+        <div class="forecast-subtitle">以太陽星座為第一宮起算（太陽宮位制）</div>
+      </div>
+      <div class="forecast-planet-row">${planetBadges}</div>
+      <div class="forecast-table">${rows}</div>
     `;
 
     // 更新摘要卡片
     document.getElementById('sumSun').textContent        = sun.sym + ' ' + sun.name;
     document.getElementById('sumMoon').textContent       = ved.moonSign.sym + ' ' + ved.moonSign.name;
+    document.getElementById('sumAsc').textContent        = ascSign.sym + ' ' + ascSign.name;
+    document.getElementById('sumHDProfile').textContent  = hd.profileKey + ' ' + hd.profile.zh.split('／')[0];
     document.getElementById('sumLifePath').textContent   = num.lifePath;
     document.getElementById('sumAnimal').textContent     = ani.symbol + ' ' + ani.animal;
     document.getElementById('sumTrigram').textContent    = (TRIGRAM_SYMBOLS[en.lifeTrigram] || '') + ' ' + en.lifeTrigram + '卦';
@@ -1318,7 +1550,14 @@ function calculate() {
       badNums:  enums.badNums.flatMap(x  => x.nums),
       hdProfile: hd.profileKey, hdProfileZh: hd.profile.zh, hdProfileKey: hd.profile.key,
       hdGatePers: hd.persSun.gate, hdLinePers: hd.persSun.line,
+      hdGateEarthPers: hd.persEarth.gate,
       hdGateDes: hd.desSun.gate, hdLineDes: hd.desSun.line,
+      hdGateEarthDes: hd.desEarth.gate,
+      hdCrossType: hd.crossType,
+      ascSign: ascSign.name, ascDeg: ascLon.toFixed(1),
+      jupSign: SIGN_NAMES[fc.jupIdx], satSign: SIGN_NAMES[fc.satIdx], urSign: SIGN_NAMES[fc.urIdx],
+      sunSignIdx, forecastHighlights: fc.rows.filter(r => r.rating >= 5 || r.rating <= 2)
+        .map(r => `第${r.num}宮（${r.theme}）：${r.notes}`).join('；'),
     };
 
     document.getElementById('result').style.display = 'block';
