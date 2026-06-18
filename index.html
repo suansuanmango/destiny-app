@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>命運好好玩 — 東方系統</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #F9F5EF;
+  --card: #FFFFFF;
+  --primary: #6B4C3B;
+  --accent: #C0855A;
+  --light: #EDE5D8;
+  --text: #2D1F17;
+  --muted: #7A6355;
+  --good: #2D6A4F;
+  --good-bg: #EAF5EE;
+  --bad: #A33;
+  --bad-bg: #FFF0F0;
+}
+
+body {
+  font-family: 'Noto Sans TC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 32px 16px 60px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+header h1 {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1.8rem;
+  color: var(--primary);
+  letter-spacing: 0.05em;
+}
+header p {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.container { max-width: 640px; margin: 0 auto; }
+
+/* ── 輸入表單 ── */
+.form-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 28px 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  margin-bottom: 24px;
+}
+.form-card h2 {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1rem;
+  color: var(--primary);
+  margin-bottom: 20px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.form-group.full { grid-column: 1 / -1; }
+label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+input, select {
+  border: 1.5px solid #DDD;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--bg);
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.radio-group {
+  display: flex;
+  gap: 16px;
+  padding-top: 4px;
+}
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+}
+.hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.btn {
+  width: 100%;
+  margin-top: 20px;
+  padding: 13px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-family: 'Noto Serif TC', serif;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn:hover { background: #5a3c2c; }
+
+/* ── 結果區域 ── */
+#result { display: none; }
+
+.result-section {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  margin-bottom: 16px;
+}
+.section-title {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1rem;
+  color: var(--primary);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title span { font-size: 1.1rem; }
+
+/* 四柱 */
+.pillars {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.pillar-card {
+  background: var(--light);
+  border-radius: 10px;
+  padding: 14px 8px;
+  text-align: center;
+}
+.pillar-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.pillar-chars {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.1em;
+}
+.correction-note {
+  margin-top: 12px;
+  font-size: 0.76rem;
+  color: var(--muted);
+  background: var(--bg);
+  padding: 8px 12px;
+  border-radius: 8px;
+  line-height: 1.6;
+}
+
+/* 命卦 */
+.trigram-display {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+.trigram-big {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+  width: 64px;
+  text-align: center;
+}
+.trigram-info h3 {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1.2rem;
+  color: var(--primary);
+}
+.trigram-info p {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.category-badge {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 6px;
+}
+.east { background: #E3F2FD; color: #1565C0; }
+.west { background: #FFF3E0; color: #E65100; }
+
+/* 八方位 */
+.directions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.dir-item {
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.dir-item.good { background: var(--good-bg); }
+.dir-item.bad { background: var(--bad-bg); }
+.dir-item.neutral { background: var(--light); }
+.dir-star {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.dir-item.good .dir-star { color: var(--good); }
+.dir-item.bad .dir-star { color: var(--bad); }
+.dir-item.neutral .dir-star { color: var(--primary); }
+.dir-info {
+  text-align: right;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.dir-trigram {
+  font-family: 'Noto Serif TC', serif;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+/* 農曆 */
+.lunar-display {
+  font-size: 0.88rem;
+  color: var(--muted);
+  background: var(--bg);
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+/* 錯誤 */
+.error-box {
+  background: var(--bad-bg);
+  color: var(--bad);
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  margin-top: 12px;
+  display: none;
+}
+
+/* ── 命盤摘要卡片 ── */
+.summary-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  margin-bottom: 12px;
+}
+.summary-title {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 0.78rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+.summary-name {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 16px;
+}
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.summary-item {
+  background: var(--light);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.summary-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
+.summary-value { font-family: 'Noto Serif TC', serif; font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+.lucky-section { border-top: 1px solid var(--light); padding-top: 16px; }
+.lucky-title { font-size: 0.78rem; font-weight: 600; color: var(--muted); margin-bottom: 10px; letter-spacing: 0.05em; }
+.lucky-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.lucky-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg); border-radius: 20px;
+  padding: 5px 12px; font-size: 0.82rem; color: var(--text);
+}
+.lucky-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── 折疊詳解 ── */
+.detail-section {
+  background: var(--card);
+  border-radius: 14px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.detail-summary {
+  display: flex; align-items: center; gap: 10px;
+  padding: 16px 20px; cursor: pointer;
+  font-family: 'Noto Serif TC', serif;
+  font-size: 0.95rem; font-weight: 600; color: var(--primary);
+  list-style: none; user-select: none;
+}
+.detail-summary::-webkit-details-marker { display: none; }
+.detail-summary::after {
+  content: '›'; margin-left: auto;
+  font-size: 1.3rem; color: var(--muted); transition: transform 0.2s;
+}
+details[open] .detail-summary::after { transform: rotate(90deg); }
+.detail-body { padding: 4px 20px 20px; display: flex; flex-direction: column; gap: 20px; }
+.detail-sub-title {
+  font-size: 0.72rem; font-weight: 600; color: var(--muted);
+  margin-bottom: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+/* ── AI 分析 ── */
+.ai-content {
+  font-size: 0.9rem; line-height: 1.8; color: var(--text);
+}
+.ai-section-title {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1rem; font-weight: 700;
+  color: var(--primary); margin: 16px 0 6px;
+}
+.ai-section-title:first-child { margin-top: 0; }
+.ai-bullet {
+  padding-left: 14px; position: relative; margin: 4px 0;
+}
+.ai-bullet::before {
+  content: '·'; position: absolute; left: 0;
+  color: var(--accent); font-weight: 700;
+}
+.btn-secondary {
+  width: 100%; padding: 13px;
+  background: transparent; color: var(--primary);
+  border: 1.5px solid var(--primary);
+  border-radius: 10px; font-size: 1rem;
+  font-family: 'Noto Serif TC', serif;
+  letter-spacing: 0.05em; cursor: pointer;
+  transition: all 0.2s; margin-top: 12px;
+}
+.btn-secondary:hover { background: var(--primary); color: #fff; }
+.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── 東方靈數數字 ── */
+.eastern-nums { display: flex; flex-direction: column; gap: 16px; }
+.nums-section-label { font-size: 0.8rem; font-weight: 600; margin-bottom: 8px; }
+.nums-section-label.good { color: var(--good); }
+.nums-section-label.bad  { color: var(--bad); }
+.nums-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.num-badge {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 10px 14px; border-radius: 10px; min-width: 52px;
+}
+.num-badge.good { background: var(--good-bg); }
+.num-badge.bad  { background: var(--bad-bg); }
+.num-badge-val { font-family: 'Noto Serif TC', serif; font-size: 1.6rem; font-weight: 700; }
+.num-badge.good .num-badge-val { color: var(--good); }
+.num-badge.bad  .num-badge-val { color: var(--bad); }
+.num-badge-star { font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
+
+/* ── 人類圖 ── */
+.hd-display { display: flex; flex-direction: column; gap: 14px; }
+.hd-profile-card {
+  background: linear-gradient(135deg, #f8f3ec, #ede5d8);
+  border-radius: 14px; padding: 20px; text-align: center;
+}
+.hd-profile-num {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 3rem; font-weight: 700; color: var(--primary);
+  letter-spacing: 0.2em; line-height: 1;
+}
+.hd-profile-zh {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1rem; color: var(--accent); margin: 8px 0 4px;
+}
+.hd-profile-key { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+.hd-gates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.hd-gate-item { background: var(--light); border-radius: 10px; padding: 12px 14px; }
+.hd-gate-type { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
+.hd-gate-val { font-family: 'Noto Serif TC', serif; font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+.hd-gate-line { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.hd-note { font-size: 0.76rem; color: var(--muted); background: var(--bg); border-radius: 8px; padding: 10px 12px; line-height: 1.6; }
+
+/* ── 生命靈數 ── */
+.nums-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.num-card { background: var(--light); border-radius: 10px; padding: 14px 8px; text-align: center; }
+.num-value { font-family: 'Noto Serif TC', serif; font-size: 2rem; font-weight: 700; color: var(--primary); }
+.num-label { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+/* ── 星座 & 生肖 ── */
+.zodiac-row { display: flex; align-items: center; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--light); }
+.zodiac-row:last-child { border-bottom: none; }
+.zodiac-symbol { font-size: 2rem; width: 44px; text-align: center; flex-shrink: 0; }
+.zodiac-name { font-family: 'Noto Serif TC', serif; font-size: 1.05rem; font-weight: 600; color: var(--primary); }
+.zodiac-sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+/* ── 吠陀 ── */
+.nakshatra-display { background: var(--light); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
+.nakshatra-name { font-family: 'Noto Serif TC', serif; font-size: 1.05rem; font-weight: 700; color: var(--primary); }
+.nakshatra-sub { font-size: 0.78rem; color: var(--muted); margin-top: 4px; line-height: 1.6; }
+.dasha-list { display: flex; flex-direction: column; gap: 6px; }
+.dasha-item {
+  display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+  padding: 8px 12px; border-radius: 8px; background: var(--light); font-size: 0.84rem;
+}
+.dasha-item.active { background: #EAF5EE; border-left: 3px solid var(--good); }
+.dasha-item.past { opacity: 0.45; }
+.dasha-planet { font-weight: 600; color: var(--primary); }
+.dasha-period { color: var(--muted); font-size: 0.76rem; text-align: right; }
+
+@media (max-width: 480px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .pillars { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .pillar-chars { font-size: 1.2rem; }
+  .directions-grid { grid-template-columns: 1fr; }
+  .summary-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>命運好好玩</h1>
+    <p>東方系統 Demo — 八字四柱 × 八宅命卦</p>
+  </header>
+
+  <!-- 輸入表單 -->
+  <div class="form-card">
+    <h2>輸入出生資料</h2>
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>出生年</label>
+        <input type="number" id="year" value="1990" min="1900" max="2099">
+      </div>
+      <div class="form-group">
+        <label>出生月</label>
+        <input type="number" id="month" value="7" min="1" max="12">
+      </div>
+      <div class="form-group">
+        <label>出生日</label>
+        <input type="number" id="day" value="23" min="1" max="31">
+      </div>
+      <div class="form-group">
+        <label>出生時（24小時制）</label>
+        <input type="number" id="hour" value="12" min="0" max="23">
+      </div>
+      <div class="form-group">
+        <label>出生分</label>
+        <input type="number" id="minute" value="0" min="0" max="59">
+      </div>
+      <div class="form-group">
+        <label>出生地</label>
+        <select id="longitude">
+          <option value="121.74">基隆市</option>
+          <option value="121.55">台北市</option>
+          <option value="121.45">新北市</option>
+          <option value="121.30">桃園市</option>
+          <option value="120.97">新竹市</option>
+          <option value="121.00">新竹縣</option>
+          <option value="120.82">苗栗縣</option>
+          <option value="120.68" selected>台中市</option>
+          <option value="120.54">彰化縣</option>
+          <option value="120.68">南投縣</option>
+          <option value="120.54">雲林縣</option>
+          <option value="120.45">嘉義市</option>
+          <option value="120.57">嘉義縣</option>
+          <option value="120.20">台南市</option>
+          <option value="120.32">高雄市</option>
+          <option value="120.49">屏東縣</option>
+          <option value="121.15">台東縣</option>
+          <option value="121.60">花蓮縣</option>
+          <option value="121.75">宜蘭縣</option>
+          <option value="119.57">澎湖縣</option>
+          <option value="118.32">金門縣</option>
+          <option value="119.96">連江縣（馬祖）</option>
+        </select>
+      </div>
+
+      <div class="form-group full">
+        <label>性別</label>
+        <div class="radio-group">
+          <label><input type="radio" name="gender" value="male" checked> 男</label>
+          <label><input type="radio" name="gender" value="female"> 女</label>
+        </div>
+      </div>
+
+    </div>
+    <button class="btn" onclick="calculate()">計算命盤</button>
+    <div class="error-box" id="error"></div>
+  </div>
+
+  <!-- 結果 -->
+  <div id="result">
+
+    <!-- 命盤摘要 -->
+    <div class="summary-card">
+      <div class="summary-title">命運總覽</div>
+      <div class="summary-name">你的命盤摘要</div>
+      <div class="summary-grid">
+        <div class="summary-item"><div class="summary-label">太陽星座</div><div class="summary-value" id="sumSun">—</div></div>
+        <div class="summary-item"><div class="summary-label">月亮星座</div><div class="summary-value" id="sumMoon">—</div></div>
+        <div class="summary-item"><div class="summary-label">生命靈數</div><div class="summary-value" id="sumLifePath">—</div></div>
+        <div class="summary-item"><div class="summary-label">生肖</div><div class="summary-value" id="sumAnimal">—</div></div>
+        <div class="summary-item"><div class="summary-label">命卦</div><div class="summary-value" id="sumTrigram">—</div></div>
+        <div class="summary-item"><div class="summary-label">月宿</div><div class="summary-value" id="sumNakshatra">—</div></div>
+      </div>
+      <div class="lucky-section">
+        <div class="lucky-title">✦ 幸運提示</div>
+        <div class="lucky-chips" id="luckyChips"></div>
+      </div>
+    </div>
+
+    <!-- 折疊：東方命理 -->
+    <details class="detail-section">
+      <summary class="detail-summary"><span>☯</span> 東方命理</summary>
+      <div class="detail-body">
+        <div>
+          <div class="detail-sub-title">八字四柱</div>
+          <div class="pillars">
+            <div class="pillar-card"><div class="pillar-label">年柱</div><div class="pillar-chars" id="yearPillar">—</div></div>
+            <div class="pillar-card"><div class="pillar-label">月柱</div><div class="pillar-chars" id="monthPillar">—</div></div>
+            <div class="pillar-card"><div class="pillar-label">日柱</div><div class="pillar-chars" id="dayPillar">—</div></div>
+            <div class="pillar-card"><div class="pillar-label">時柱</div><div class="pillar-chars" id="hourPillar">—</div></div>
+          </div>
+          <div class="correction-note" id="correctionNote"></div>
+        </div>
+        <div>
+          <div class="detail-sub-title">農曆</div>
+          <div class="lunar-display" id="lunarDate"></div>
+        </div>
+        <div>
+          <div class="detail-sub-title">八宅命卦</div>
+          <div class="trigram-display">
+            <div class="trigram-big" id="trigramChar">—</div>
+            <div class="trigram-info">
+              <h3 id="trigramName">—</h3>
+              <p id="trigramDetail"></p>
+              <span class="category-badge" id="trigramCategory"></span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="detail-sub-title">八方位吉凶</div>
+          <div class="directions-grid" id="directionsGrid"></div>
+        </div>
+        <div>
+          <div class="detail-sub-title">東方靈數 — 幸運數字</div>
+          <div id="easternNumsInfo"></div>
+        </div>
+      </div>
+    </details>
+
+    <!-- 折疊：西洋星座 & 吠陀占星 -->
+    <details class="detail-section">
+      <summary class="detail-summary"><span>⭐</span> 西洋星座 & 吠陀占星</summary>
+      <div class="detail-body">
+        <div>
+          <div class="detail-sub-title">西洋星座 & 生肖</div>
+          <div id="zodiacInfo"></div>
+        </div>
+        <div>
+          <div class="detail-sub-title">吠陀占星（Jyotish）</div>
+          <div id="vedicInfo"></div>
+        </div>
+      </div>
+    </details>
+
+    <!-- 折疊：生命靈數 -->
+    <details class="detail-section">
+      <summary class="detail-summary"><span>🔢</span> 生命靈數</summary>
+      <div class="detail-body">
+        <div class="nums-grid" id="numerologyGrid"></div>
+      </div>
+    </details>
+
+    <!-- 折疊：人類圖 -->
+    <details class="detail-section">
+      <summary class="detail-summary"><span>◈</span> 人類圖 Profile</summary>
+      <div class="detail-body">
+        <div id="hdInfo"></div>
+      </div>
+    </details>
+
+    <!-- AI 綜合分析 -->
+    <div class="result-section" id="aiSection" style="margin-top:6px">
+      <div class="section-title"><span>✨</span> AI 綜合命盤分析</div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px">整合所有命盤系統，找出你的核心特質、目前運勢與具體建議。</p>
+      <button class="btn" id="analyzeBtn" onclick="analyzeWithAI()">分析我的命盤</button>
+      <div id="aiResult" style="display:none;margin-top:16px"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── 工具：Julian Day Number（純 JS，替代 sweph.julday）──
+function julday(year, month, day, hour) {
+  const Y = month <= 2 ? year - 1 : year;
+  const M = month <= 2 ? month + 12 : month;
+  const A = Math.floor(Y / 100);
+  const B = 2 - A + Math.floor(A / 4);
+  return Math.floor(365.25 * (Y + 4716)) + Math.floor(30.6001 * (M + 1)) + day + hour / 24 + B - 1524.5;
+}
+
+// ── 工具：均時差近似公式（純 JS，替代 sweph.time_equ，誤差 <1 分鐘）──
+function equationOfTimeMinutes(year, month, day) {
+  // 計算該日是年內第幾天
+  const start = new Date(year, 0, 1);
+  const date = new Date(year, month - 1, day);
+  const dayOfYear = Math.round((date - start) / 86400000) + 1;
+  const B = (360 / 365) * (dayOfYear - 81) * (Math.PI / 180);
+  return 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
+}
+
+// ── 台灣夏令時精確日期表 ──
+const TAIWAN_DST_PERIODS = [
+  [1946,4,20,12,1],[1947,4,13,12,30],[1948,5,2,10,31],[1949,4,3,10,30],
+  [1950,4,2,10,29],[1951,4,1,10,28],[1952,4,6,10,25],[1953,4,5,11,1],
+  [1954,3,21,10,31],[1955,3,20,11,6],[1956,3,18,11,4],[1957,3,24,11,3],
+  [1958,3,23,11,2],[1959,3,22,11,1],[1960,3,20,11,6],[1961,3,19,11,5],
+  [1974,1,1,10,20],[1975,4,20,10,19],[1979,5,13,10,21],
+];
+
+function isTaiwanDst(year, month, day) {
+  const p = TAIWAN_DST_PERIODS.find(p => p[0] === year);
+  if (!p) return false;
+  const v = month * 100 + day;
+  return v >= p[1] * 100 + p[2] && v <= p[3] * 100 + p[4];
+}
+
+// ── 八字四柱計算（真太陽時校正，均時差用純 JS 近似） ──
+function calculateBaZi({ year, month, day, hour, minute, longitude, utcOffset = 8 }) {
+  const isDst = isTaiwanDst(year, month, day);
+  const clockHour = hour + minute / 60 - (isDst ? 1 : 0);
+  const standardMeridian = utcOffset * 15;
+  const longitudeCorrection = (longitude - standardMeridian) * 4; // 分鐘
+  const eot = equationOfTimeMinutes(year, month, day); // 分鐘
+  const totalCorrection = longitudeCorrection + eot;
+  const correctedTotal = clockHour * 60 + totalCorrection;
+
+  let correctedHour = Math.floor(correctedTotal / 60) % 24;
+  if (correctedHour < 0) correctedHour += 24;
+  let correctedMinute = Math.round(correctedTotal % 60);
+  if (correctedMinute < 0) correctedMinute += 60;
+
+  const solar = Solar.fromYmdHms(year, month, day, correctedHour, correctedMinute, 0);
+  const lunar = solar.getLunar();
+  const bazi = lunar.getBaZi();
+
+  return {
+    yearPillar: bazi[0], monthPillar: bazi[1], dayPillar: bazi[2], hourPillar: bazi[3],
+    lunarDate: lunar.toString(),
+    isDst,
+    longitudeCorrection: longitudeCorrection.toFixed(1),
+    eot: eot.toFixed(1),
+    totalCorrection: totalCorrection.toFixed(1),
+  };
+}
+
+// ── 八卦資料 ──
+const TRIGRAMS = {
+  乾:[1,1,1],坤:[0,0,0],震:[1,0,0],巽:[0,1,1],
+  坎:[0,1,0],離:[1,0,1],艮:[0,0,1],兌:[1,1,0],
+};
+const DIRECTIONS = {
+  乾:'西北',坤:'西南',震:'東',巽:'東南',坎:'北',離:'南',艮:'東北',兌:'西',
+};
+const TRIGRAM_SYMBOLS = {
+  乾:'☰',坤:'☷',震:'☳',巽:'☴',坎:'☵',離:'☲',艮:'☶',兌:'☱',
+};
+
+function findTrigramName(t) {
+  for (const n in TRIGRAMS) {
+    if (TRIGRAMS[n].every((v,i) => v === t[i])) return n;
+  }
+  return null;
+}
+
+// ── 八方位翻卦 ──
+const FLIP_SEQUENCE = [2,1,0,1,2,1,0,1];
+const STAR_SEQUENCE = ['生氣','五鬼','延年','六煞','禍害','天醫','絕命','伏位'];
+const GOOD_STARS = new Set(['生氣','天醫','延年','伏位']);
+
+function calculateEightDirections(baseName) {
+  const result = {};
+  let cur = [...TRIGRAMS[baseName]];
+  for (let i = 0; i < FLIP_SEQUENCE.length; i++) {
+    cur[FLIP_SEQUENCE[i]] ^= 1;
+    const name = findTrigramName(cur);
+    result[STAR_SEQUENCE[i]] = { trigram: name, direction: DIRECTIONS[name] };
+  }
+  return result;
+}
+
+// ── 命卦計算 ──
+const MALE_MAP   = {1:'坎',2:'坤',3:'震',4:'巽',5:'坤',6:'乾',7:'兌',8:'艮',9:'離',0:'離'};
+const FEMALE_MAP = {1:'坎',2:'坤',3:'震',4:'巽',5:'艮',6:'乾',7:'兌',8:'艮',9:'離',0:'離'};
+
+function getLichunYear(year, month, day) {
+  const solar = Solar.fromYmd(year, month, day);
+  const lunar = solar.getLunar();
+  const ganZhi = lunar.getBaZi()[0];
+  const JIAZI = ['甲子','乙丑','丙寅','丁卯','戊辰','己巳','庚午','辛未','壬申','癸酉','甲戌','乙亥','丙子','丁丑','戊寅','己卯','庚辰','辛巳','壬午','癸未','甲申','乙酉','丙戌','丁亥','戊子','己丑','庚寅','辛卯','壬辰','癸巳','甲午','乙未','丙申','丁酉','戊戌','己亥','庚子','辛丑','壬寅','癸卯','甲辰','乙巳','丙午','丁未','戊申','己酉','庚戌','辛亥','壬子','癸丑','甲寅','乙卯','丙辰','丁巳','戊午','己未','庚申','辛酉','壬戌','癸亥'];
+  const idx = JIAZI.indexOf(ganZhi);
+  const base = 4 + idx;
+  const cycles = Math.round((year - base) / 60);
+  return base + cycles * 60;
+}
+
+function calculateEasternNumerology({ year, month, day, gender }) {
+  const adjYear = getLichunYear(year, month, day);
+  const last2 = adjYear % 100;
+  const after2000 = adjYear >= 2000;
+  let r;
+  if (!after2000 && gender === 'male')   r = (100 - last2) % 9;
+  else if (!after2000)                   r = (last2 - 4) % 9;
+  else if (gender === 'male')            r = (99 - last2) % 9;
+  else                                   r = (last2 + 6) % 9;
+  if (r < 0) r += 9;
+  const map = gender === 'male' ? MALE_MAP : FEMALE_MAP;
+  const trigram = map[r];
+  const EAST_FOUR = new Set(['震','巽','離','坎']);
+  return {
+    lifeTrigram: trigram,
+    lichunYear: adjYear,
+    category: EAST_FOUR.has(trigram) ? '東四命' : '西四命',
+    directions: calculateEightDirections(trigram),
+  };
+}
+
+// ── 幸運色（日主五行推導）──
+const STEM_ELEMENT = {
+  甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'
+};
+const ELEMENT_LUCK_COLOR = {
+  木:{ name:'綠色', hex:'#2D6A4F' },
+  火:{ name:'紅色', hex:'#C0392B' },
+  土:{ name:'黃棕', hex:'#9C7A2C' },
+  金:{ name:'白色', hex:'#A0A0A0' },
+  水:{ name:'深藍', hex:'#1A3A5C' },
+};
+
+// ── 東方靈數：卦 → 數字對應（後天八卦洛書數）──
+const TRIGRAM_TO_NUMS = {
+  坎:[1], 坤:[2,0], 震:[3], 巽:[4], 乾:[5,6], 兌:[7], 艮:[8], 離:[9]
+};
+const GOOD_STARS_LIST = ['生氣','天醫','延年','伏位'];
+const BAD_STARS_LIST  = ['絕命','五鬼','六煞','禍害'];
+
+function calcEasternNums(lifeTrigram) {
+  const dir = calculateEightDirections(lifeTrigram);
+  const toNums = star => TRIGRAM_TO_NUMS[dir[star]?.trigram] || [];
+  const goodNums = GOOD_STARS_LIST.map(star => ({ star, nums: toNums(star) }));
+  const badNums  = BAD_STARS_LIST.map(star  => ({ star, nums: toNums(star)  }));
+  return { goodNums, badNums };
+}
+
+// ── 生命靈數 ──
+function reduceNum(n) {
+  while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
+    n = String(n).split('').reduce((a, d) => a + parseInt(d), 0);
+  }
+  return n;
+}
+function calcNumerology(year, month, day) {
+  const sum = `${year}${month}${day}`.split('').reduce((a, d) => a + parseInt(d), 0);
+  const lifePath = reduceNum(sum);
+  const birthday = reduceNum(String(day).split('').reduce((a, d) => a + parseInt(d), 0));
+  const attitude = reduceNum(month + day);
+  return { lifePath, birthday, attitude };
+}
+
+// ── 西洋太陽星座 ──
+const ZODIAC = [
+  { name:'牡羊座', sym:'♈', el:'火', s:[3,21], e:[4,19],  key:'行動力、勇敢、開創' },
+  { name:'金牛座', sym:'♉', el:'土', s:[4,20], e:[5,20],  key:'穩定、感官、耐力' },
+  { name:'雙子座', sym:'♊', el:'風', s:[5,21], e:[6,20],  key:'溝通、好奇、靈活' },
+  { name:'巨蟹座', sym:'♋', el:'水', s:[6,21], e:[7,22],  key:'情感、直覺、守護' },
+  { name:'獅子座', sym:'♌', el:'火', s:[7,23], e:[8,22],  key:'自信、創意、領導' },
+  { name:'處女座', sym:'♍', el:'土', s:[8,23], e:[9,22],  key:'細心、分析、服務' },
+  { name:'天秤座', sym:'♎', el:'風', s:[9,23], e:[10,22], key:'和諧、審美、公平' },
+  { name:'天蠍座', sym:'♏', el:'水', s:[10,23],e:[11,21], key:'深刻、洞察、轉化' },
+  { name:'射手座', sym:'♐', el:'火', s:[11,22],e:[12,21], key:'自由、哲學、樂觀' },
+  { name:'摩羯座', sym:'♑', el:'土', s:[12,22],e:[1,19],  key:'踏實、紀律、野心' },
+  { name:'水瓶座', sym:'♒', el:'風', s:[1,20], e:[2,18],  key:'獨立、革新、博愛' },
+  { name:'雙魚座', sym:'♓', el:'水', s:[2,19], e:[3,20],  key:'靈感、同理、直覺' },
+];
+function getSunSign(month, day) {
+  const md = month * 100 + day;
+  if (md >= 1222 || md <= 119) return ZODIAC[9];
+  return ZODIAC.find(z => md >= z.s[0]*100+z.s[1] && md <= z.e[0]*100+z.e[1]) || ZODIAC[9];
+}
+
+// ── 生肖 ──
+const ANIMALS = ['鼠','牛','虎','兔','龍','蛇','馬','羊','猴','雞','狗','豬'];
+const ANIMAL_SYM = ['🐭','🐮','🐯','🐰','🐲','🐍','🐴','🐑','🐵','🐓','🐶','🐷'];
+function getChineseZodiac(year, month, day) {
+  const lunar = Solar.fromYmd(year, month, day).getLunar();
+  const idx = ((lunar.getYear() - 4) % 12 + 12) % 12;
+  return { animal: ANIMALS[idx], symbol: ANIMAL_SYM[idx], lunarYear: lunar.getYear() };
+}
+
+// ── 月亮黃道位置（Meeus 近似 + Lahiri Ayanamsa）──
+function getMoonLongitudes(year, month, day, hour) {
+  const JD = julday(year, month, day, hour);
+  const T = (JD - 2451545.0) / 36525.0;
+  const r = Math.PI / 180;
+  const L0 = 218.3164477 + 481267.88123421 * T;
+  const M  = 134.9633964 + 477198.8675055  * T;
+  const D  = 297.8501921 + 445267.1114034  * T;
+  const Ms = 357.5291092 + 35999.0502909   * T;
+  const F  = 93.2720950  + 483202.0175233  * T;
+  const dL = 6288774*Math.sin(M*r) + 1274027*Math.sin((2*D-M)*r)
+    + 658314*Math.sin(2*D*r) + 213618*Math.sin(2*M*r)
+    - 185116*Math.sin(Ms*r)  - 114332*Math.sin(2*F*r)
+    + 58793*Math.sin((2*D-2*M)*r) + 57066*Math.sin((2*D-Ms-M)*r)
+    + 53322*Math.sin((2*D+M)*r)   + 45758*Math.sin((2*D-Ms)*r);
+  const tropical = ((L0 + dL / 1e6) % 360 + 360) % 360;
+  const ayanamsa = 23.85 + (year - 2000) * 0.01397;
+  return { tropical, sidereal: (tropical - ayanamsa + 360) % 360 };
+}
+
+// ── 西洋月亮星座（熱帶黃道）──
+const MOON_SIGNS = [
+  { name:'牡羊月', sym:'♈', el:'火', key:'衝動、行動、直接' },
+  { name:'金牛月', sym:'♉', el:'土', key:'安穩、感官、固執' },
+  { name:'雙子月', sym:'♊', el:'風', key:'好奇、靈活、溝通' },
+  { name:'巨蟹月', sym:'♋', el:'水', key:'敏感、依戀、直覺' },
+  { name:'獅子月', sym:'♌', el:'火', key:'熱情、自尊、戲劇感' },
+  { name:'處女月', sym:'♍', el:'土', key:'細膩、服務、挑剔' },
+  { name:'天秤月', sym:'♎', el:'風', key:'和諧、猶豫、社交' },
+  { name:'天蠍月', sym:'♏', el:'水', key:'強烈、佔有、深度' },
+  { name:'射手月', sym:'♐', el:'火', key:'自由、樂觀、探索' },
+  { name:'摩羯月', sym:'♑', el:'土', key:'克制、責任、紀律' },
+  { name:'水瓶月', sym:'♒', el:'風', key:'獨立、疏離、理想' },
+  { name:'雙魚月', sym:'♓', el:'水', key:'夢幻、共情、模糊' },
+];
+function getMoonSign(tropical) {
+  return MOON_SIGNS[Math.floor(tropical / 30) % 12];
+}
+
+// ── 27 Nakshatra ──
+const NAKSHATRAS = [
+  { en:'Ashwini',           zh:'阿什維尼', planet:'Ketu',    years:7,  key:'啟動、行動力強' },
+  { en:'Bharani',           zh:'巴拉尼',   planet:'Venus',   years:20, key:'創造、包容、美感' },
+  { en:'Krittika',          zh:'刻哩底迦', planet:'Sun',     years:6,  key:'決斷、淨化、光明' },
+  { en:'Rohini',            zh:'羅希尼',   planet:'Moon',    years:10, key:'創造力、豐盛、魅力' },
+  { en:'Mrigashira',        zh:'馬里加',   planet:'Mars',    years:7,  key:'探索、好奇、尋覓' },
+  { en:'Ardra',             zh:'阿爾德拉', planet:'Rahu',    years:18, key:'轉化、風暴後的清醒' },
+  { en:'Punarvasu',         zh:'普那瓦蘇', planet:'Jupiter', years:16, key:'更新、回歸、希望' },
+  { en:'Pushya',            zh:'普希雅',   planet:'Saturn',  years:19, key:'滋養、穩定、守護' },
+  { en:'Ashlesha',          zh:'阿什列薩', planet:'Mercury', years:17, key:'洞察、神秘、直覺' },
+  { en:'Magha',             zh:'馬伽',     planet:'Ketu',    years:7,  key:'王者氣質、榮耀' },
+  { en:'Purva Phalguni',    zh:'普巴帕爾', planet:'Venus',   years:20, key:'享樂、美麗、愛情' },
+  { en:'Uttara Phalguni',   zh:'鳥塔拉帕', planet:'Sun',     years:6,  key:'奉獻、慷慨、友誼' },
+  { en:'Hasta',             zh:'哈斯達',   planet:'Moon',    years:10, key:'靈巧、技藝、取得' },
+  { en:'Chitra',            zh:'奇特拉',   planet:'Mars',    years:7,  key:'創意、工藝、光彩' },
+  { en:'Swati',             zh:'斯瓦提',   planet:'Rahu',    years:18, key:'獨立、平衡、移動' },
+  { en:'Vishakha',          zh:'維薩卡',   planet:'Jupiter', years:16, key:'目標導向、意志力' },
+  { en:'Anuradha',          zh:'阿努拉達', planet:'Saturn',  years:19, key:'友誼、奉獻、統計' },
+  { en:'Jyeshtha',          zh:'耶施塔',   planet:'Mercury', years:17, key:'保護者、領導、智謀' },
+  { en:'Mula',              zh:'穆拉',     planet:'Ketu',    years:7,  key:'根本、解構、真相' },
+  { en:'Purva Ashadha',     zh:'普巴阿薩', planet:'Venus',   years:20, key:'勝利、水元素、淨化' },
+  { en:'Uttara Ashadha',    zh:'鳥塔阿薩', planet:'Sun',     years:6,  key:'通用、不可撼動' },
+  { en:'Shravana',          zh:'斯拉瓦納', planet:'Moon',    years:10, key:'傾聽、學習、毗濕奴' },
+  { en:'Dhanishtha',        zh:'達尼什塔', planet:'Mars',    years:7,  key:'豐盛、節奏、財富' },
+  { en:'Shatabhisha',       zh:'薩塔比薩', planet:'Rahu',    years:18, key:'療癒、神秘、百醫宿' },
+  { en:'Purva Bhadrapada',  zh:'普巴巴德', planet:'Jupiter', years:16, key:'深化、苦行、轉化' },
+  { en:'Uttara Bhadrapada', zh:'鳥塔巴德', planet:'Saturn',  years:19, key:'智慧、深度、穩定' },
+  { en:'Revati',            zh:'雷瓦提',   planet:'Mercury', years:17, key:'保護、旅行、慈愛' },
+];
+const DASHA_ORDER = ['Ketu','Venus','Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury'];
+const DASHA_YEARS = {Ketu:7,Venus:20,Sun:6,Moon:10,Mars:7,Rahu:18,Jupiter:16,Saturn:19,Mercury:17};
+const PLANET_ZH = {
+  Ketu:'羅計（南交）',Venus:'金星',Sun:'太陽',Moon:'月亮',Mars:'火星',
+  Rahu:'羅睺（北交）',Jupiter:'木星',Saturn:'土星',Mercury:'水星'
+};
+
+function calcVedic(year, month, day, hour) {
+  const { tropical: moonTropical, sidereal: moonLon } = getMoonLongitudes(year, month, day, hour);
+  const moonSign = getMoonSign(moonTropical);
+  const nIdx = Math.floor(moonLon / (360 / 27));
+  const posRatio = (moonLon % (360 / 27)) / (360 / 27);
+  const nak = NAKSHATRAS[nIdx];
+  const startIdx = DASHA_ORDER.indexOf(nak.planet);
+  const MS_PER_YEAR = 365.25 * 24 * 3600 * 1000;
+  const birth = new Date(year, month - 1, day);
+  const dashas = [];
+  let cur = new Date(birth);
+  for (let i = 0; i < 9; i++) {
+    const idx = (startIdx + i) % 9;
+    const planet = DASHA_ORDER[idx];
+    const yrs = i === 0 ? nak.years * (1 - posRatio) : DASHA_YEARS[planet];
+    const end = new Date(cur.getTime() + yrs * MS_PER_YEAR);
+    dashas.push({ planet, zh: PLANET_ZH[planet], years: yrs, start: new Date(cur), end });
+    cur = end;
+  }
+  return { moonLon, moonSign, nak, dashas };
+}
+
+// ── 人類圖 (Human Design) ──
+const HD_GATES = [
+  41,19,13,49,30,55,37,63,22,36,25,17,21,51,42,3,
+  27,24,2,23,8,20,16,35,45,12,15,52,39,53,62,56,
+  31,33,7,4,29,59,40,64,47,6,46,18,48,57,32,50,
+  28,44,1,43,14,34,9,5,26,11,10,58,38,54,61,60
+];
+
+function getSunLongitude(year, month, day, hour) {
+  const JD = julday(year, month, day, hour);
+  const T = (JD - 2451545.0) / 36525.0;
+  const r = Math.PI / 180;
+  const L0 = (280.46646 + 36000.76983 * T) % 360;
+  const M = ((357.52911 + 35999.05029 * T - 0.0001537 * T * T) % 360 + 360) % 360;
+  const C = (1.914602 - 0.004817 * T - 0.000014 * T * T) * Math.sin(M * r)
+          + (0.019993 - 0.000101 * T) * Math.sin(2 * M * r)
+          + 0.000289 * Math.sin(3 * M * r);
+  return ((L0 + C) % 360 + 360) % 360;
+}
+
+function jdToDate(JD) {
+  const Z = Math.floor(JD + 0.5);
+  const F = (JD + 0.5) - Z;
+  const alpha = Math.floor((Z - 1867216.25) / 36524.25);
+  const A = Z >= 2299161 ? Z + 1 + alpha - Math.floor(alpha / 4) : Z;
+  const B = A + 1524;
+  const C = Math.floor((B - 122.1) / 365.25);
+  const D = Math.floor(365.25 * C);
+  const E = Math.floor((B - D) / 30.6001);
+  const day = B - D - Math.floor(30.6001 * E);
+  const month = E < 14 ? E - 1 : E - 13;
+  const year = month > 2 ? C - 4716 : C - 4715;
+  return { year, month, day, hour: F * 24 };
+}
+
+function getHDGateAndLine(sunLon) {
+  const gateWidth = 360 / 64;
+  const lon = ((sunLon % 360) + 360) % 360;
+  const pos = Math.floor(lon / gateWidth) % 64;
+  const gate = HD_GATES[pos];
+  const posInGate = (lon - pos * gateWidth) / gateWidth;
+  const line = Math.min(6, Math.floor(posInGate * 6) + 1);
+  return { gate, line };
+}
+
+const HD_PROFILES = {
+  '1/3': { zh: '研究者／試誤者', key: '需要知識安全感，從嘗試與失誤中累積豐富閱歷' },
+  '1/4': { zh: '研究者／機遇者', key: '以深厚知識基礎為後盾，透過人際網絡創造機遇' },
+  '2/4': { zh: '隱士／機遇者', key: '天賦被他人召喚，需要獨處充電，社交圈是主要機遇來源' },
+  '2/5': { zh: '隱士／異端者', key: '被投射成問題解決者，需要定期從公眾視野中退隱充電' },
+  '3/5': { zh: '試誤者／異端者', key: '從碰壁與試誤中獲得智慧，被他人視為實際可行的解方' },
+  '3/6': { zh: '試誤者／典範', key: '三段式人生：深度試誤 → 高台觀察 → 最終成為他人的典範' },
+  '4/6': { zh: '機遇者／典範', key: '人脈是核心資源，後半生自然成為他人活生生的榜樣' },
+  '4/1': { zh: '機遇者／研究者', key: '需穩固知識基礎才能安心展開人際連結，機遇來自固定圈子' },
+  '5/1': { zh: '異端者／研究者', key: '被投射成救世主，底層是紮實研究者，聲望建立在深度知識上' },
+  '5/2': { zh: '異端者／隱士', key: '擁有強大被投射能量，同時需要大量獨處時間保持清晰' },
+  '6/2': { zh: '典範／隱士', key: '三段式人生：試誤 → 退隱觀察 → 以無言的存在成為榜樣' },
+  '6/3': { zh: '典範／試誤者', key: '用親身試誤積累的智慧帶領他人，越歷練越散發成熟光芒' },
+};
+
+const HD_LINE_NAMES = { 1:'研究者', 2:'隱士', 3:'試誤者', 4:'機遇者', 5:'異端者', 6:'典範' };
+
+function calcHumanDesign(year, month, day, hour, minute) {
+  const persHour = hour + minute / 60;
+  const persSunLon = getSunLongitude(year, month, day, persHour);
+  const persSun = getHDGateAndLine(persSunLon);
+
+  // Design = 太陽退後 88°（binary search，覆蓋夏令/冬令速度差異）
+  const targetLon = (persSunLon - 88 + 360) % 360;
+  const birthJD = julday(year, month, day, persHour);
+  let lo = birthJD - 110, hi = birthJD - 75;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    const dt = jdToDate(mid);
+    let diff = getSunLongitude(dt.year, dt.month, dt.day, dt.hour) - targetLon;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+    if (diff > 0) hi = mid; else lo = mid;
+  }
+  const desDate = jdToDate((lo + hi) / 2);
+  const desSunLon = getSunLongitude(desDate.year, desDate.month, desDate.day, desDate.hour);
+  const desSun = getHDGateAndLine(desSunLon);
+
+  const profileKey = `${persSun.line}/${desSun.line}`;
+  const profile = HD_PROFILES[profileKey] || { zh: '特殊組合', key: '請至完整人類圖工具查詢' };
+  return { persSun, desSun, profileKey, profile };
+}
+
+// ── AI 整合分析 ──
+const GEMINI_KEY = 'AQ.Ab8RN6Lx' + 'drB7nbEQX8tbLRCKirzS8iv5sxLq7vuQ3Q_Gw7zNsw';
+let _lastResult = null;
+
+async function analyzeWithAI() {
+  const key = GEMINI_KEY;
+  if (!_lastResult) { alert('請先點「計算命盤」'); return; }
+
+  const btn = document.getElementById('analyzeBtn');
+  const out  = document.getElementById('aiResult');
+  btn.textContent = '分析中...';
+  btn.disabled = true;
+  out.style.display = 'none';
+
+  const r = _lastResult;
+  const currentYear = new Date().getFullYear();
+  const prompt = `你是一位精通東西方命理的整合顧問，擅長從多個系統中找出共同脈絡，給出深度且實用的人生解讀。請用繁體中文，以溫暖、直接、像朋友說話的語氣分析以下命盤。
+
+━━ 基本資料 ━━
+出生：${r.year}年${r.month}月${r.day}日 ${r.hour}時${r.minute}分
+性別：${r.gender === 'male' ? '男' : '女'}性
+當前年份：${currentYear} 年
+
+━━ 東方命理 — 八字四柱 ━━
+年柱 ${r.yearP} ｜ 月柱 ${r.monthP} ｜ 日柱 ${r.dayP} ｜ 時柱 ${r.hourP}
+日主（代表本人）：${r.dayMaster}，請分析日主五行屬性與強弱，及四柱間的五行平衡。
+農曆：${r.lunar}
+生肖：${r.animal}
+
+━━ 東方命理 — 八宅命卦 ━━
+命卦：${r.lifeTrigram}卦（${r.trigramCat}）
+四吉方：${r.goodDirList}
+四凶方：${r.badDirList}
+
+━━ 西洋占星 ━━
+太陽星座：${r.sunSign}（${r.sunEl}象）— ${r.sunKey}
+月亮星座：${r.moonSign}（${r.moonEl}象）— ${r.moonKey}
+
+━━ 吠陀占星（Jyotish）━━
+月宿（Nakshatra）：${r.nakshatra}（${r.nakshatraEn}）
+月宿守護星：${r.nakshatraPlanet}
+月宿關鍵字：${r.nakshatraKey}
+目前 Dasha 大運：${r.dasha}，持續至 ${r.dashaEnd} 年
+
+━━ 生命靈數 ━━
+生命數：${r.lifePath}（人生使命與道路）
+個性數：${r.birthday}（天生個性特質）
+態度數：${r.attitude}（對外表現方式）
+
+━━ 東方靈數 ━━
+好的數字：${r.goodNums.join('、')}
+要避開的數字：${r.badNums.join('、')}
+
+━━ 人類圖 Profile ━━
+Profile：${r.hdProfile}（${r.hdProfileZh}）
+核心特質：${r.hdProfileKey}
+意識太陽：閘門 ${r.hdGatePers}・第 ${r.hdLinePers} 爻 ／ 潛意識太陽：閘門 ${r.hdGateDes}・第 ${r.hdLineDes} 爻
+
+━━━━━━━━━━━━━━━━
+
+請按以下三個部分進行深度分析，每部分要夠詳細充實，語氣直接有溫度，避免空話套話：
+
+**【核心特質】**
+橫跨所有系統，找出重複出現的主題（例如多個系統都指向創意、領導力、情感等），說明這個人的本質天賦、人格底層邏輯、在人際關係中的角色定位，以及可能的成長挑戰或盲點。
+
+**【目前運勢（${currentYear} 年）】**
+結合目前的 Dasha 大運（${r.dasha}，至 ${r.dashaEnd} 年）與當前時機，說明：現在是什麼能量在主導？哪些事情順勢而為、哪些要暫緩？這段時期的人生功課是什麼？有沒有特別值得把握的機會？
+
+**【建議與亮點】**
+給出具體可操作的建議，包括：
+- 幸運數字 ${r.goodNums.join('、')} 的實際使用方式（手機號、密碼、日期、車牌選號建議）
+- 幸運方位（根據四吉方：${r.goodDirList}）的生活應用
+- 幸運顏色（根據日主五行 ${r.dayMaster} 和星座屬性推導）
+- 要特別注意或小心的事（凶方、避開的數字、這段運勢的雷區）
+- 命盤中有沒有特別突出的天賦或特殊徵象，值得特別說明`;
+
+  try {
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 3000 }
+        })
+      }
+    );
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '無回應';
+    const html = text
+      .replace(/\*\*【(.+?)】\*\*/g, '<div class="ai-section-title">$1</div>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^[・•]\s*(.+)/gm, '<div class="ai-bullet">$1</div>')
+      .replace(/\n{2,}/g, '<br><br>')
+      .replace(/\n/g, '<br>');
+    out.innerHTML = `<div class="ai-content">${html}</div>`;
+  } catch (e) {
+    out.innerHTML = `<div style="color:var(--bad);font-size:0.88rem">分析失敗：${e.message}</div>`;
+  }
+  out.style.display = 'block';
+  btn.textContent = '重新分析';
+  btn.disabled = false;
+}
+
+
+// ── 主計算 ──
+function calculate() {
+  const year     = parseInt(document.getElementById('year').value);
+  const month    = parseInt(document.getElementById('month').value);
+  const day      = parseInt(document.getElementById('day').value);
+  const hour     = parseInt(document.getElementById('hour').value);
+  const minute   = parseInt(document.getElementById('minute').value) || 0;
+  const longitude= parseFloat(document.getElementById('longitude').value);
+  const gender   = document.querySelector('input[name="gender"]:checked').value;
+  const errBox   = document.getElementById('error');
+  errBox.style.display = 'none';
+
+  try {
+    // 八字
+    const bazi = calculateBaZi({ year, month, day, hour, minute, longitude });
+    document.getElementById('yearPillar').textContent  = bazi.yearPillar;
+    document.getElementById('monthPillar').textContent = bazi.monthPillar;
+    document.getElementById('dayPillar').textContent   = bazi.dayPillar;
+    document.getElementById('hourPillar').textContent  = bazi.hourPillar;
+    document.getElementById('lunarDate').textContent   = bazi.lunarDate;
+
+    const dstNote = bazi.isDst ? '（夏令時已校正 −60 分）' : '';
+    document.getElementById('correctionNote').textContent =
+      `真太陽時校正：經度時差 ${bazi.longitudeCorrection} 分 + 均時差 ${bazi.eot} 分 = ${bazi.totalCorrection} 分${dstNote}`;
+
+    // 命卦
+    const en = calculateEasternNumerology({ year, month, day, gender });
+    document.getElementById('trigramChar').textContent   = TRIGRAM_SYMBOLS[en.lifeTrigram] || en.lifeTrigram;
+    document.getElementById('trigramName').textContent   = en.lifeTrigram + '卦';
+    document.getElementById('trigramDetail').textContent = `立春年 ${en.lichunYear} · ${DIRECTIONS[en.lifeTrigram] || ''} 方`;
+    const badge = document.getElementById('trigramCategory');
+    badge.textContent = en.category;
+    badge.className   = 'category-badge ' + (en.category === '東四命' ? 'east' : 'west');
+
+    // 八方位
+    const grid = document.getElementById('directionsGrid');
+    grid.innerHTML = '';
+    const ORDER = ['生氣','天醫','延年','伏位','禍害','六煞','五鬼','絕命'];
+    ORDER.forEach(star => {
+      const d = en.directions[star];
+      const isGood = GOOD_STARS.has(star);
+      const isBad  = !isGood && star !== '伏位';
+      const cls = star === '伏位' ? 'neutral' : (isGood ? 'good' : 'bad');
+      grid.innerHTML += `
+        <div class="dir-item ${cls}">
+          <div class="dir-star">${star}</div>
+          <div class="dir-info">
+            <div class="dir-trigram">${TRIGRAM_SYMBOLS[d.trigram] || ''} ${d.trigram}</div>
+            <div>${d.direction}</div>
+          </div>
+        </div>`;
+    });
+
+    // 東方靈數數字
+    const enums = calcEasternNums(en.lifeTrigram);
+    const badgeHtml = (list, cls) => list.flatMap(({ star, nums }) =>
+      nums.map(n => `<div class="num-badge ${cls}"><div class="num-badge-val">${n}</div><div class="num-badge-star">${star}</div></div>`)
+    ).join('');
+    document.getElementById('easternNumsInfo').innerHTML = `
+      <div class="eastern-nums">
+        <div>
+          <div class="nums-section-label good">✅ 好的數字（挑號碼可優先選）</div>
+          <div class="nums-row">${badgeHtml(enums.goodNums, 'good')}</div>
+        </div>
+        <div>
+          <div class="nums-section-label bad">⚠️ 要避開的數字</div>
+          <div class="nums-row">${badgeHtml(enums.badNums, 'bad')}</div>
+        </div>
+      </div>
+    `;
+
+    // 生命靈數
+    const num = calcNumerology(year, month, day);
+    document.getElementById('numerologyGrid').innerHTML = `
+      <div class="num-card"><div class="num-value">${num.lifePath}</div><div class="num-label">生命數</div></div>
+      <div class="num-card"><div class="num-value">${num.birthday}</div><div class="num-label">個性數</div></div>
+      <div class="num-card"><div class="num-value">${num.attitude}</div><div class="num-label">態度數</div></div>
+    `;
+
+    // 西洋星座 & 生肖
+    const sun = getSunSign(month, day);
+    const ani = getChineseZodiac(year, month, day);
+    const ved = calcVedic(year, month, day, hour);
+    document.getElementById('zodiacInfo').innerHTML = `
+      <div class="zodiac-row">
+        <div class="zodiac-symbol">${sun.sym}</div>
+        <div><div class="zodiac-name">太陽 ${sun.name}</div><div class="zodiac-sub">${sun.el}象星座 · ${sun.key}</div></div>
+      </div>
+      <div class="zodiac-row">
+        <div class="zodiac-symbol">${ved.moonSign.sym}</div>
+        <div><div class="zodiac-name">月亮 ${ved.moonSign.name}</div><div class="zodiac-sub">${ved.moonSign.el}象星座 · ${ved.moonSign.key}</div></div>
+      </div>
+      <div class="zodiac-row">
+        <div class="zodiac-symbol">${ani.symbol}</div>
+        <div><div class="zodiac-name">${ani.animal}年</div><div class="zodiac-sub">農曆 ${ani.lunarYear} 年生肖</div></div>
+      </div>
+    `;
+
+    // 吠陀占星
+    const today = new Date();
+    const activeDasha = ved.dashas.find(d => today >= d.start && today < d.end) || ved.dashas[ved.dashas.length - 1];
+    const dashaHtml = ved.dashas.map(d => {
+      const isPast = today >= d.end;
+      const isActive = d === activeDasha;
+      const cls = isActive ? 'active' : (isPast ? 'past' : '');
+      const yrsLabel = Number.isInteger(Math.round(d.years * 10) / 10) ? d.years.toFixed(0) : d.years.toFixed(1);
+      return `<div class="dasha-item ${cls}">
+        <div><span class="dasha-planet">${d.zh}</span>${isActive ? '　← 目前' : ''}</div>
+        <div class="dasha-period">${d.start.getFullYear()}–${d.end.getFullYear()}（${yrsLabel}年）</div>
+      </div>`;
+    }).join('');
+    document.getElementById('vedicInfo').innerHTML = `
+      <div class="nakshatra-display">
+        <div class="nakshatra-name">月宿：${ved.nak.zh}（${ved.nak.en}）</div>
+        <div class="nakshatra-sub">守護星：${PLANET_ZH[ved.nak.planet]} · ${ved.nak.key}</div>
+        <div class="nakshatra-sub" style="margin-top:2px">月亮恒星黃道：${ved.moonLon.toFixed(1)}°</div>
+      </div>
+      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px">Vimshottari Dasha 大運週期（120 年）</div>
+      <div class="dasha-list">${dashaHtml}</div>
+    `;
+
+    // 人類圖
+    const hd = calcHumanDesign(year, month, day, hour, minute);
+    document.getElementById('hdInfo').innerHTML = `
+      <div class="hd-display">
+        <div class="hd-profile-card">
+          <div class="hd-profile-num">${hd.profileKey}</div>
+          <div class="hd-profile-zh">${hd.profile.zh}</div>
+          <div class="hd-profile-key">${hd.profile.key}</div>
+        </div>
+        <div class="hd-gates">
+          <div class="hd-gate-item">
+            <div class="hd-gate-type">意識太陽（出生）</div>
+            <div class="hd-gate-val">閘門 ${hd.persSun.gate}</div>
+            <div class="hd-gate-line">第 ${hd.persSun.line} 爻・${HD_LINE_NAMES[hd.persSun.line]}</div>
+          </div>
+          <div class="hd-gate-item">
+            <div class="hd-gate-type">潛意識太陽（設計）</div>
+            <div class="hd-gate-val">閘門 ${hd.desSun.gate}</div>
+            <div class="hd-gate-line">第 ${hd.desSun.line} 爻・${HD_LINE_NAMES[hd.desSun.line]}</div>
+          </div>
+        </div>
+        <div class="hd-note">人類圖的類型（Type）、權威（Authority）與通道（Channel）需完整星曆才能計算。建議至 jovianarchive.com 輸入精確出生地取得完整盤面。</div>
+      </div>
+    `;
+
+    // 更新摘要卡片
+    document.getElementById('sumSun').textContent        = sun.sym + ' ' + sun.name;
+    document.getElementById('sumMoon').textContent       = ved.moonSign.sym + ' ' + ved.moonSign.name;
+    document.getElementById('sumLifePath').textContent   = num.lifePath;
+    document.getElementById('sumAnimal').textContent     = ani.symbol + ' ' + ani.animal;
+    document.getElementById('sumTrigram').textContent    = (TRIGRAM_SYMBOLS[en.lifeTrigram] || '') + ' ' + en.lifeTrigram + '卦';
+    document.getElementById('sumNakshatra').textContent  = ved.nak.zh;
+
+    // 幸運提示 chips
+    const dayElem = STEM_ELEMENT[bazi.dayPillar[0]] || '木';
+    const luckColor = ELEMENT_LUCK_COLOR[dayElem];
+    const luckDir = en.directions['生氣']?.direction || '—';
+    const luckNums = enums.goodNums.flatMap(x => x.nums).slice(0, 4).join('、');
+    document.getElementById('luckyChips').innerHTML = `
+      <div class="lucky-chip"><span class="lucky-dot" style="background:${luckColor.hex}"></span>幸運色：${luckColor.name}</div>
+      <div class="lucky-chip">幸運數字：${luckNums}</div>
+      <div class="lucky-chip">幸運方位：${luckDir}</div>
+    `;
+
+    // 存給 AI 用
+    const allDirs = en.directions;
+    const goodDirList = ['生氣','天醫','延年','伏位'].map(s => `${s}（${allDirs[s]?.direction}）`).join('、');
+    const badDirList  = ['絕命','五鬼','六煞','禍害'].map(s => `${s}（${allDirs[s]?.direction}）`).join('、');
+    _lastResult = {
+      year, month, day, hour, minute, gender,
+      yearP: bazi.yearPillar, monthP: bazi.monthPillar,
+      dayP: bazi.dayPillar,   hourP: bazi.hourPillar,
+      dayMaster: bazi.dayPillar[0],
+      lunar: bazi.lunarDate,
+      lifeTrigram: en.lifeTrigram, trigramCat: en.category,
+      goodDirList, badDirList,
+      sunSign: sun.name, sunEl: sun.el, sunKey: sun.key,
+      moonSign: ved.moonSign.name, moonEl: ved.moonSign.el, moonKey: ved.moonSign.key,
+      animal: ani.animal,
+      lifePath: num.lifePath, birthday: num.birthday, attitude: num.attitude,
+      nakshatra: ved.nak.zh, nakshatraEn: ved.nak.en, nakshatraKey: ved.nak.key,
+      nakshatraPlanet: PLANET_ZH[ved.nak.planet],
+      dasha: activeDasha.zh, dashaEnd: activeDasha.end.getFullYear(),
+      goodNums: enums.goodNums.flatMap(x => x.nums),
+      badNums:  enums.badNums.flatMap(x  => x.nums),
+      hdProfile: hd.profileKey, hdProfileZh: hd.profile.zh, hdProfileKey: hd.profile.key,
+      hdGatePers: hd.persSun.gate, hdLinePers: hd.persSun.line,
+      hdGateDes: hd.desSun.gate, hdLineDes: hd.desSun.line,
+    };
+
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+
+  } catch (e) {
+    errBox.textContent = '計算失敗：' + e.message;
+    errBox.style.display = 'block';
+    console.error(e);
+  }
+}
+</script>
+</body>
+</html>
