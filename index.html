@@ -1049,10 +1049,12 @@ function jdToDate(JD) {
 
 function getHDGateAndLine(sunLon) {
   const gateWidth = 360 / 64;
+  // HD 標準：0° 牡羊座（春分點）= 閘門 25，offset = 10 × 5.625° = 56.25°
   const lon = ((sunLon % 360) + 360) % 360;
-  const pos = Math.floor(lon / gateWidth) % 64;
+  const offsetLon = ((lon + 56.25) % 360);
+  const pos = Math.floor(offsetLon / gateWidth) % 64;
   const gate = HD_GATES[pos];
-  const posInGate = (lon - pos * gateWidth) / gateWidth;
+  const posInGate = (offsetLon % gateWidth) / gateWidth;
   const line = Math.min(6, Math.floor(posInGate * 6) + 1);
   return { gate, line };
 }
@@ -1138,6 +1140,82 @@ function calcAscendant(year, month, day, hour, longitude, latitude) {
   const RAMC = LST * r;
   let asc = Math.atan2(-Math.cos(RAMC), Math.sin(eps) * Math.tan(phi) + Math.cos(eps) * Math.sin(RAMC)) / r;
   return (asc % 360 + 360) % 360;
+}
+
+// ── Placidus 十二宮計算 ──
+function calcPlacidusHouses(year, month, day, hour, lon_deg, lat_deg) {
+  const JD = julday(year, month, day, hour);
+  const T  = (JD - 2451545.0) / 36525.0;
+  const r  = Math.PI / 180;
+  const eps = 23.4392911 - 0.0130042 * T;
+  const phi = lat_deg;
+
+  const theta0 = 280.46061837 + 360.98564736629 * (JD - 2451545.0) + 0.000387933 * T * T;
+  const GMST   = ((theta0 % 360) + 360) % 360;
+  const RAMC   = ((GMST + lon_deg) % 360 + 360) % 360;
+
+  // MC
+  let MC = Math.atan(Math.tan(RAMC * r) / Math.cos(eps * r)) / r;
+  if (RAMC > 90 && RAMC <= 270) MC += 180;
+  MC = ((MC % 360) + 360) % 360;
+
+  // ASC
+  let ASC = Math.atan2(-Math.cos(RAMC * r),
+    Math.sin(eps * r) * Math.tan(phi * r) + Math.cos(eps * r) * Math.sin(RAMC * r)) / r;
+  ASC = ((ASC % 360) + 360) % 360;
+
+  const IC  = (MC  + 180) % 360;
+  const DSC = (ASC + 180) % 360;
+
+  function eclToEq(lam_deg) {
+    const lam = lam_deg * r;
+    const dec = Math.asin(Math.sin(lam) * Math.sin(eps * r)) / r;
+    let   ra  = Math.atan2(Math.cos(eps * r) * Math.sin(lam), Math.cos(lam)) / r;
+    ra = ((ra % 360) + 360) % 360;
+    return { ra, dec };
+  }
+
+  function solveCusp(type) {
+    const arcMC  = ((ASC - MC  + 360) % 360);
+    const arcASC = ((IC  - ASC + 360) % 360);
+    let lam;
+    if      (type === 'H11') lam = (MC  + arcMC  / 3)     % 360;
+    else if (type === 'H12') lam = (MC  + arcMC  * 2 / 3) % 360;
+    else if (type === 'H2')  lam = (ASC + arcASC / 3)     % 360;
+    else                     lam = (ASC + arcASC * 2 / 3) % 360;
+    lam = ((lam % 360) + 360) % 360;
+
+    for (let i = 0; i < 60; i++) {
+      const { ra, dec } = eclToEq(lam);
+      const t = -Math.tan(phi * r) * Math.tan(dec * r);
+      let DSA = t <= -1 ? 180 : t >= 1 ? 0 : Math.acos(t) / r;
+      const NSA = 180 - DSA;
+      const HA  = ((RAMC - ra) % 360 + 360) % 360;
+
+      let target;
+      if      (type === 'H11') target = (360 - DSA / 3 + 360) % 360;
+      else if (type === 'H12') target = (360 - 2 * DSA / 3 + 360) % 360;
+      else if (type === 'H2')  target = 180 + 2 * NSA / 3;
+      else                     target = 180 + NSA / 3;
+
+      let diff = HA - target;
+      if (diff >  180) diff -= 360;
+      if (diff < -180) diff += 360;
+      if (Math.abs(diff) < 0.0001) break;
+      lam = ((lam - diff * 0.5) % 360 + 360) % 360;
+    }
+    return ((lam % 360) + 360) % 360;
+  }
+
+  const H11 = solveCusp('H11'), H12 = solveCusp('H12');
+  const H2  = solveCusp('H2'),  H3  = solveCusp('H3');
+
+  return [
+    ASC, H2, H3, IC,
+    (H11 + 180) % 360, (H12 + 180) % 360,
+    DSC, (H2 + 180) % 360, (H3 + 180) % 360,
+    MC, H11, H12,
+  ];
 }
 
 // ── 行星黃道位置（Meeus 簡化 VSOP87，~2° 精度）──
@@ -1484,7 +1562,7 @@ function calculate() {
     const ascIdx = Math.floor(ascLon / 30);
     const ascDeg = (ascLon % 30).toFixed(1);
     const ascSign = ZODIAC[ascIdx];
-    const houses = Array.from({length:12}, (_, i) => (ascIdx + i) % 12);
+    const placidus = calcPlacidusHouses(year, month, day, birthHour, longitude, latitude);
     document.getElementById('risingInfo').innerHTML = `
       <div class="rising-display">
         <div class="rising-card">
@@ -1492,16 +1570,20 @@ function calculate() {
           <div class="rising-name">上升 ${ascSign.name}</div>
           <div class="rising-sub">${ascDeg}° ${ascSign.name} ｜ ${ascSign.el}象星座<br>${ascSign.key}</div>
         </div>
-        <div class="detail-sub-title" style="margin-bottom:0">十二宮位置（整宮制）</div>
+        <div class="detail-sub-title" style="margin-bottom:0">十二宮位置（Placidus 宮位制）</div>
         <div class="house-grid">
-          ${houses.map((sIdx, i) => `
+          ${placidus.map((cuspLon, i) => {
+            const sIdx = Math.floor(cuspLon / 30) % 12;
+            const deg  = (cuspLon % 30).toFixed(1);
+            return `
             <div class="house-item">
               <div class="house-num">第 ${i+1} 宮</div>
               <div>
-                <div class="house-sign">${SIGN_SYMS[sIdx]} ${SIGN_NAMES[sIdx]}座</div>
+                <div class="house-sign">${SIGN_SYMS[sIdx]} ${deg}° ${SIGN_NAMES[sIdx]}座</div>
                 <div class="house-theme">${HOUSE_THEMES[i]}</div>
               </div>
-            </div>`).join('')}
+            </div>`;
+          }).join('')}
         </div>
       </div>
     `;
