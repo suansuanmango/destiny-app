@@ -441,6 +441,11 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
 .hd-ch-desc { font-size: 0.74rem; color: var(--muted); line-height: 1.5; }
 .hd-ch-strat { font-size: 0.72rem; color: #0d7a5f; background: #e8f7f3; border-radius: 6px; padding: 5px 9px; margin-top: 6px; line-height: 1.55; }
 
+/* ── 行運速報（摘要卡內） ── */
+.transit-summary-bar { display:flex; align-items:flex-start; gap:8px; background:#f0f7ff; border-radius:8px; padding:8px 12px; margin-top:10px; }
+.transit-summary-label { font-size:0.7rem; font-weight:700; color:#4a90d9; white-space:nowrap; padding-top:1px; }
+.transit-summary-text { font-size:0.73rem; color:#333; line-height:1.5; }
+
 /* ── 當下行運 ── */
 .transit-date { font-size:0.75rem; color:var(--muted); margin-bottom:10px; }
 .transit-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:7px; margin-bottom:14px; }
@@ -664,6 +669,10 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
         <div class="lucky-title">✦ 幸運提示</div>
         <div class="lucky-chips" id="luckyChips"></div>
       </div>
+      <div class="transit-summary-bar" id="transitSummaryBar" style="display:none">
+        <span class="transit-summary-label">今日行運</span>
+        <span class="transit-summary-text" id="transitSummary"></span>
+      </div>
     </div>
 
     <!-- AI 綜合分析 -->
@@ -714,14 +723,6 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
       </div>
     </details>
 
-    <!-- 折疊：當下行運 -->
-    <details class="detail-section">
-      <summary class="detail-summary"><span>🌍</span> 當下行運</summary>
-      <div class="detail-body">
-        <div id="transitInfo"></div>
-      </div>
-    </details>
-
     <!-- 折疊：本命行星 -->
     <details class="detail-section">
       <summary class="detail-summary"><span>🪐</span> 本命行星</summary>
@@ -730,18 +731,11 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
       </div>
     </details>
 
-    <!-- 折疊：西洋星座 & 吠陀占星 -->
+    <!-- 折疊：吠陀占星 -->
     <details class="detail-section">
-      <summary class="detail-summary"><span>⭐</span> 西洋星座 & 吠陀占星</summary>
+      <summary class="detail-summary"><span>⭐</span> 吠陀占星</summary>
       <div class="detail-body">
-        <div>
-          <div class="detail-sub-title">西洋星座 & 生肖</div>
-          <div id="zodiacInfo"></div>
-        </div>
-        <div>
-          <div class="detail-sub-title">吠陀占星（Jyotish）</div>
-          <div id="vedicInfo"></div>
-        </div>
+        <div id="vedicInfo"></div>
       </div>
     </details>
 
@@ -758,14 +752,6 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
       <summary class="detail-summary"><span>◈</span> 人類圖 Profile</summary>
       <div class="detail-body">
         <div id="hdInfo"></div>
-      </div>
-    </details>
-
-    <!-- 折疊：上升星座 & 十二宮 -->
-    <details class="detail-section">
-      <summary class="detail-summary"><span>🌅</span> 上升星座 & 十二宮</summary>
-      <div class="detail-body">
-        <div id="risingInfo"></div>
       </div>
     </details>
 
@@ -1967,14 +1953,11 @@ function calc2026Forecast(sunSignIdx) {
   const rows = HOUSE_THEMES.map((theme, i) => {
     const hSign = (sunSignIdx + i) % 12;
     const notes = [];
-    let rating = 3;
-    if (jupIdx === hSign) { notes.push('木星加持★'); rating += 2; }
-    if (satIdx === hSign) { notes.push('土星考驗');   rating -= 1; }
-    if (urIdx  === hSign) { notes.push('天王激變⚡');  rating += 1; }
-    rating = Math.max(1, Math.min(5, rating));
-    const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
-    const cls = rating >= 5 ? 'highlight' : (rating <= 2 ? 'challenge' : '');
-    return { num: i+1, theme, notes: notes.join(' | ') || '平穩', stars, rating, cls,
+    if (jupIdx === hSign) notes.push('♃ 木星');
+    if (satIdx === hSign) notes.push('♄ 土星');
+    if (urIdx  === hSign) notes.push('♅ 天王');
+    const cls = (jupIdx === hSign && !notes.includes('♄ 土星')) ? 'highlight' : (satIdx === hSign && notes.length === 1) ? 'challenge' : '';
+    return { num: i+1, theme, notes: notes.join(' · ') || '', cls,
              signName: SIGN_NAMES[hSign], signSym: SIGN_SYMS[hSign] };
   });
   return { rows, jupLon, satLon, urLon, jupIdx, satIdx, urIdx };
@@ -2336,59 +2319,18 @@ function calculate() {
       </div>
     `;
 
-    // 當下行運
+    // 當下行運 → 摘要卡一句話
     const transits = calcCurrentTransits(natalPlanets);
-    const MAX_ASPECTS = 12;
-    document.getElementById('transitInfo').innerHTML = `
-      <div class="transit-date">今日天空 ${transits.dateStr}（UTC）</div>
-      <div class="transit-grid">
-        ${transits.tPlanets.map(p => `
-          <div class="transit-planet-chip">
-            <span class="transit-chip-sym">${p.sym}</span>
-            <span class="transit-chip-name">${p.zh}</span>
-            <span class="transit-chip-pos">${p.sigSym}${p.sigZH} ${p.dms}${p.retro ? '<br><span class="transit-chip-retro">逆行 R</span>' : ''}</span>
-          </div>
-        `).join('')}
-      </div>
-      <div class="transit-aspects-label">重要行運相位</div>
-      ${transits.aspects.slice(0, MAX_ASPECTS).map(({ tp, np, asp }) => {
-        const cls = asp.hard ? 'hard' : 'soft';
-        const desc = asp.hard
-          ? `過境${tp.zh}的能量正在考驗你本命${np.zh}的領域，摩擦帶來成長。`
-          : `過境${tp.zh}的能量正在支持你本命${np.zh}的領域，是順勢行動的好時機。`;
-        return `
-          <div class="transit-aspect-item ${cls}">
-            <div class="transit-aspect-row">
-              <span class="transit-asp-sym ${cls}">${asp.sym}</span>
-              <span class="transit-planet-label">過境${tp.zh}</span>
-              <span class="transit-asp-name">${asp.name}</span>
-              <span class="transit-planet-label">本命${np.zh}</span>
-              <span class="transit-orb">差 ${asp.orb.toFixed(1)}°</span>
-            </div>
-            <div class="transit-aspect-desc">${desc}</div>
-          </div>
-        `;
-      }).join('')}
-      ${transits.aspects.length === 0 ? '<div style="color:var(--muted);font-size:0.8rem">目前無顯著行運相位</div>' : ''}
-    `;
+    const topAsp = transits.aspects[0];
+    const transitSummaryText = topAsp
+      ? `${topAsp.asp.sym} 過境${topAsp.tp.zh}${topAsp.asp.name}本命${topAsp.np.zh}（差 ${topAsp.asp.orb.toFixed(1)}°）— ${topAsp.asp.hard ? '靜觀待變，留意摩擦' : '順流時機，可主動推進'}`
+      : '今日無顯著行運相位，能量平穩';
+    document.getElementById('transitSummary').textContent = transitSummaryText;
+    document.getElementById('transitSummaryBar').style.display = 'flex';
 
-    // 西洋星座 & 生肖（不依賴時間）
+    // 西洋星座（只取太陽星座供後續用）
     const sun = getSunSign(month, day);
     const ani = getChineseZodiac(year, month, day);
-    document.getElementById('zodiacInfo').innerHTML = `
-      <div class="zodiac-row">
-        <div class="zodiac-symbol">${sun.sym}</div>
-        <div><div class="zodiac-name">太陽 ${sun.name}</div><div class="zodiac-sub">${sun.el}象星座 · ${sun.key}</div></div>
-      </div>
-      <div class="zodiac-row">
-        <div class="zodiac-symbol">${ved.moonSign.sym}</div>
-        <div><div class="zodiac-name">月亮 ${ved.moonSign.name}</div><div class="zodiac-sub">${ved.moonSign.el}象星座 · ${ved.moonSign.key}</div></div>
-      </div>
-      <div class="zodiac-row">
-        <div class="zodiac-symbol">${ani.symbol}</div>
-        <div><div class="zodiac-name">${ani.animal}年</div><div class="zodiac-sub">農曆 ${ani.lunarYear} 年生肖</div></div>
-      </div>
-    `;
 
     // 吠陀占星
     const today = new Date();
@@ -2491,30 +2433,6 @@ function calculate() {
     const ascIdx = Math.floor(ascLon / 30);
     const ascDeg = (ascLon % 30).toFixed(1);
     const ascSign = ZODIAC[ascIdx];
-    document.getElementById('risingInfo').innerHTML = `
-      <div class="rising-display">
-        <div class="rising-card">
-          <div class="rising-sym">${ascSign.sym}</div>
-          <div class="rising-name">上升 ${ascSign.name}</div>
-          <div class="rising-sub">${ascDeg}° ${ascSign.name} ｜ ${ascSign.el}象星座<br>${ascSign.key}</div>
-        </div>
-        <div class="detail-sub-title" style="margin-bottom:0">十二宮位置（Placidus 宮位制）</div>
-        <div class="house-grid">
-          ${placidus.map((cuspLon, i) => {
-            const sIdx = Math.floor(cuspLon / 30) % 12;
-            const deg  = (cuspLon % 30).toFixed(1);
-            return `
-            <div class="house-item">
-              <div class="house-num">第 ${i+1} 宮</div>
-              <div>
-                <div class="house-sign">${SIGN_SYMS[sIdx]} ${deg}° ${SIGN_NAMES[sIdx]}座</div>
-                <div class="house-theme">${HOUSE_THEMES[i]}</div>
-              </div>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>
-    `;
 
     // 年度運勢（太陽宮位制）
     const sunSignIdx = ZODIAC.indexOf(sun);
@@ -2528,8 +2446,7 @@ function calculate() {
       <div class="forecast-row ${r.cls}">
         <div class="f-house">第${r.num}宮</div>
         <div class="f-theme">${r.theme.split('/')[0].trim()}</div>
-        <div class="f-stars">${r.stars}</div>
-        <div class="f-note">${r.notes}</div>
+        ${r.notes ? `<div class="f-note">${r.notes}</div>` : ''}
       </div>`).join('');
     document.getElementById('forecastInfo').innerHTML = `
       <div class="forecast-header">
