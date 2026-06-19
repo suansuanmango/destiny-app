@@ -427,12 +427,15 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
 .hd-authority { font-size: 0.85rem; color: var(--muted); }
 .hd-channels { background: var(--light); border-radius: 10px; padding: 12px 14px; }
 .hd-channels-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 8px; }
-.hd-channels-list { display: flex; flex-wrap: wrap; gap: 6px; }
-.hd-ch-chip {
-  font-family: 'Noto Serif TC', serif; font-size: 0.9rem; font-weight: 700;
-  background: #fff; border: 1.5px solid var(--accent); color: var(--primary);
-  border-radius: 8px; padding: 3px 10px;
+.hd-channels-list { display: flex; flex-direction: column; gap: 8px; }
+.hd-ch-item {
+  background: #fff; border: 1.5px solid var(--accent);
+  border-radius: 10px; padding: 9px 12px;
 }
+.hd-ch-header { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.hd-ch-gates { font-family: 'Noto Serif TC', serif; font-size: 0.95rem; font-weight: 700; color: var(--primary); }
+.hd-ch-name { font-size: 0.8rem; color: var(--accent); font-weight: 500; }
+.hd-ch-desc { font-size: 0.74rem; color: var(--muted); line-height: 1.5; }
 
 /* ── 生命靈數 ── */
 .nums-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -1028,6 +1031,58 @@ const HD_GATES = [
   28,44,1,43,14,34,9,5,26,11,10,58,38,54,61,60
 ];
 
+// 64 閘門短名
+const HD_GATE_NAMES = {
+  1:'創意',2:'接受',3:'難度',4:'公式',5:'等待',6:'衝突',7:'軍隊',8:'凝聚',
+  9:'細節',10:'踏行',11:'和平',12:'靜止',13:'傾聽',14:'強技',15:'極端',16:'熱忱',
+  17:'意見',18:'修正',19:'接近',20:'當下',21:'噬嗑',22:'優雅',23:'分裂',24:'回歸',
+  25:'天真',26:'征服',27:'滋養',28:'遊戲',29:'說是',30:'火焰',31:'影響',32:'持續',
+  33:'隱退',34:'強能',35:'變化',36:'黑暗',37:'家族',38:'鬥士',39:'阻礙',40:'獨處',
+  41:'收縮',42:'成長',43:'突破',44:'相聚',45:'聚合',46:'推進',47:'壓迫',48:'深度',
+  49:'革命',50:'鼎',51:'震',52:'靜定',53:'發展',54:'少女',55:'豐盛',56:'漫遊',
+  57:'溫和',58:'喜悅',59:'分散',60:'限制',61:'真理',62:'細節',63:'完成後',64:'完成前',
+};
+
+// 通道名稱與意涵
+const HD_CHANNEL_NAMES = {
+  '1-8':   ['靈感', '創造力自然流動，成為他人的靈感來源'],
+  '2-14':  ['節拍', '內在方向感強烈，物質資源隨正確路線而來'],
+  '3-60':  ['突變', '在限制中找到突破，帶來創新改變'],
+  '4-63':  ['邏輯', '不斷質疑與驗證，透過系統思考找到答案'],
+  '5-15':  ['韻律', '與宇宙節奏同步，為他人建立日常規律'],
+  '6-59':  ['交配', '突破藩籬建立親密，打開人與人之間的隔閡'],
+  '7-31':  ['阿爾法', '自然的領導者，被他人推舉而非自我宣稱'],
+  '9-52':  ['專注', '深度專注的能量，持續積累帶來豐盛成果'],
+  '10-20': ['覺醒', '在當下活出真我，存在本身就是影響力'],
+  '10-34': ['探索', '熱忱的探索者，隨時回應生命的召喚'],
+  '10-57': ['完美形式', '直覺引導行動，臨場判斷力出眾'],
+  '11-56': ['好奇', '透過故事傳遞靈感，讓人對新想法感到興奮'],
+  '12-22': ['開放', '情感表達力強，能深深觸動他人內心'],
+  '13-33': ['浪子', '傾聽他人故事，將智慧轉化為集體傳承'],
+  '16-48': ['波長', '精熟之後展現天賦，執著追求技藝完美'],
+  '17-62': ['接受', '以詳盡細節說服他人，邏輯嚴密的溝通者'],
+  '18-58': ['判斷', '發現問題並改善，天生的品質把關者'],
+  '19-49': ['合成', '對需求高度敏感，促進資源與人的最佳配對'],
+  '20-34': ['魅力', '活在當下立即行動，能量強大的實現者'],
+  '20-57': ['腦波', '直覺與行動合一，本能的清醒與生存力'],
+  '21-45': ['金錢線', '管理資源的天賦，統御財務與材料的領導力'],
+  '23-43': ['結構', '突破性洞察，在舊框架外找到革新之道'],
+  '24-61': ['覺知', '思想不斷深化，帶來獨特的精神洞見'],
+  '25-51': ['啟動', '無畏的競爭精神，帶領他人跨越恐懼與限制'],
+  '26-44': ['臣服', '擅長傳遞訊息與記憶過往，掌握人際連結資源'],
+  '27-50': ['保護', '守護社群與價值觀，傳承的守護者'],
+  '28-38': ['掙扎', '在逆境中尋找意義，鬥士精神發光發熱'],
+  '29-46': ['發現', '對生命全然說是，全然投入帶來幸運際遇'],
+  '30-41': ['認可', '渴望新體驗，點燃他人熱情的欲望之火'],
+  '32-54': ['轉化', '渴望蛻變，在野心與轉化中找到持久意義'],
+  '34-57': ['力量', '強大的直覺與生命力，本能保護自我與他人'],
+  '35-36': ['短暫', '渴望變化與冒險，透過體驗積累多元智慧'],
+  '37-40': ['社群', '以協議建立社群，家庭與部落的核心黏合力'],
+  '39-55': ['情緒', '情感豐富如詩，情緒波動觸發精神高峰體驗'],
+  '42-53': ['成熟', '循環完整的力量，啟動與結束都帶來成長動力'],
+  '47-64': ['抽象', '反覆思索過去，整合混亂為有意義的洞見'],
+};
+
 // 36 條 HD 通道閘門對
 const HD_CHANNEL_PAIRS = [
   [1,8],[2,14],[3,60],[4,63],[5,15],[6,59],[7,31],[9,52],
@@ -1094,6 +1149,13 @@ function calcHDTypeAuthority(channels) {
   return { type, typeZh: HD_TYPE_ZH[type], authority };
 }
 
+function getNorthNodeLon(t) {
+  // 平均北交點（Rahu）：J2000.0 = 125.04452°，每儒略世紀退行 1934.136261°
+  const T = t.tt / 36525.0;
+  const lon = 125.04452 - 1934.136261 * T + 0.0020708 * T * T;
+  return ((lon % 360) + 360) % 360;
+}
+
 function getAllPlanetLongitudes(year, month, day, hour) {
   const t = _astroTime(year, month, day, hour);
   const sunLon = ((Astronomy.SunPosition(t).elon % 360) + 360) % 360;
@@ -1103,6 +1165,7 @@ function getAllPlanetLongitudes(year, month, day, hour) {
     const vec = Astronomy.GeoVector(body, t, true);
     lons[body] = ((Astronomy.Ecliptic(vec).elon % 360) + 360) % 360;
   }
+  lons.NNode = getNorthNodeLon(t);
   return lons;
 }
 
@@ -1128,9 +1191,9 @@ function jdToDate(JD) {
 
 function getHDGateAndLine(sunLon) {
   const gateWidth = 360 / 64;
-  // 57.9° offset 反推自亞洲人類圖學院實測資料（1987-08-09 → Gate 7 Line 3）
+  // 57.98° offset：反推自亞洲人類圖學院實測（pers Sun Line 3 + des Sun Line 6），兩爻均有 0.08° 餘裕
   const lon = ((sunLon % 360) + 360) % 360;
-  const offsetLon = ((lon + 57.9) % 360);
+  const offsetLon = ((lon + 57.98) % 360);
   const pos = Math.floor(offsetLon / gateWidth) % 64;
   const gate = HD_GATES[pos];
   const posInGate = (offsetLon % gateWidth) / gateWidth;
@@ -1783,22 +1846,22 @@ function calculate() {
         <div class="hd-gates">
           <div class="hd-gate-item">
             <div class="hd-gate-type">意識太陽（出生）</div>
-            <div class="hd-gate-val">閘門 ${hd.persSun.gate}</div>
+            <div class="hd-gate-val">閘門 ${hd.persSun.gate} <span style="font-size:0.72rem;color:var(--muted);font-family:inherit;">${HD_GATE_NAMES[hd.persSun.gate]||''}</span></div>
             <div class="hd-gate-line">第 ${hd.persSun.line} 爻・${HD_LINE_NAMES[hd.persSun.line]}</div>
           </div>
           <div class="hd-gate-item">
             <div class="hd-gate-type">意識地球（出生）</div>
-            <div class="hd-gate-val">閘門 ${hd.persEarth.gate}</div>
+            <div class="hd-gate-val">閘門 ${hd.persEarth.gate} <span style="font-size:0.72rem;color:var(--muted);font-family:inherit;">${HD_GATE_NAMES[hd.persEarth.gate]||''}</span></div>
             <div class="hd-gate-line">第 ${hd.persEarth.line} 爻</div>
           </div>
           <div class="hd-gate-item">
             <div class="hd-gate-type">潛意識太陽（設計）</div>
-            <div class="hd-gate-val">閘門 ${hd.desSun.gate}</div>
+            <div class="hd-gate-val">閘門 ${hd.desSun.gate} <span style="font-size:0.72rem;color:var(--muted);font-family:inherit;">${HD_GATE_NAMES[hd.desSun.gate]||''}</span></div>
             <div class="hd-gate-line">第 ${hd.desSun.line} 爻・${HD_LINE_NAMES[hd.desSun.line]}</div>
           </div>
           <div class="hd-gate-item">
             <div class="hd-gate-type">潛意識地球（設計）</div>
-            <div class="hd-gate-val">閘門 ${hd.desEarth.gate}</div>
+            <div class="hd-gate-val">閘門 ${hd.desEarth.gate} <span style="font-size:0.72rem;color:var(--muted);font-family:inherit;">${HD_GATE_NAMES[hd.desEarth.gate]||''}</span></div>
             <div class="hd-gate-line">第 ${hd.desEarth.line} 爻</div>
           </div>
         </div>
@@ -1809,7 +1872,17 @@ function calculate() {
         ${hd.channels.length ? `
         <div class="hd-channels">
           <div class="hd-channels-label">啟動通道（${hd.channels.length} 條）</div>
-          <div class="hd-channels-list">${hd.channels.map(([a,b]) => `<span class="hd-ch-chip">${a}-${b}</span>`).join('')}</div>
+          <div class="hd-channels-list">${hd.channels.map(([a,b]) => {
+            const key = a < b ? `${a}-${b}` : `${b}-${a}`;
+            const info = HD_CHANNEL_NAMES[key] || ['通道', ''];
+            return `<div class="hd-ch-item">
+              <div class="hd-ch-header">
+                <span class="hd-ch-gates">${a}-${b}</span>
+                <span class="hd-ch-name">${info[0]}通道</span>
+              </div>
+              <div class="hd-ch-desc">${info[1]}</div>
+            </div>`;
+          }).join('')}</div>
         </div>` : '<div class="hd-channels"><div class="hd-channels-label">無通道啟動（白色盤）</div></div>'}
         <div class="hd-cross">
           <div class="hd-cross-label">${hd.crossType}｜輪迴交叉</div>
