@@ -441,6 +441,27 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
 .hd-ch-desc { font-size: 0.74rem; color: var(--muted); line-height: 1.5; }
 .hd-ch-strat { font-size: 0.72rem; color: #0d7a5f; background: #e8f7f3; border-radius: 6px; padding: 5px 9px; margin-top: 6px; line-height: 1.55; }
 
+/* ── 當下行運 ── */
+.transit-date { font-size:0.75rem; color:var(--muted); margin-bottom:10px; }
+.transit-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:7px; margin-bottom:14px; }
+.transit-planet-chip { background:var(--light); border-radius:8px; padding:7px 10px; display:flex; align-items:center; gap:6px; }
+.transit-chip-sym { font-size:1rem; color:var(--primary); }
+.transit-chip-name { font-size:0.78rem; font-weight:600; color:var(--primary); }
+.transit-chip-pos { font-size:0.72rem; color:var(--muted); margin-left:auto; text-align:right; }
+.transit-chip-retro { font-size:0.65rem; color:#c0392b; }
+.transit-aspects-label { font-size:0.78rem; font-weight:600; color:var(--muted); margin-bottom:8px; letter-spacing:.04em; }
+.transit-aspect-item { border-radius:8px; padding:8px 11px; margin-bottom:6px; }
+.transit-aspect-item.soft { background:#eef6ff; border-left:3px solid #4a90d9; }
+.transit-aspect-item.hard { background:#fff3f0; border-left:3px solid #e05c3a; }
+.transit-aspect-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:0.8rem; }
+.transit-asp-sym { font-size:1rem; font-weight:700; }
+.transit-asp-sym.soft { color:#4a90d9; }
+.transit-asp-sym.hard { color:#e05c3a; }
+.transit-planet-label { font-weight:600; color:var(--primary); }
+.transit-asp-name { color:var(--muted); }
+.transit-orb { font-size:0.7rem; color:var(--muted); margin-left:auto; }
+.transit-aspect-desc { font-size:0.72rem; color:#555; margin-top:4px; line-height:1.5; }
+
 /* ── 本命行星 ── */
 .natal-planets { display: flex; flex-direction: column; gap: 10px; }
 .natal-planet-item { background: var(--light); border-radius: 10px; padding: 12px 14px; }
@@ -690,6 +711,14 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
           <div class="detail-sub-title">東方靈數 — 幸運數字</div>
           <div id="easternNumsInfo"></div>
         </div>
+      </div>
+    </details>
+
+    <!-- 折疊：當下行運 -->
+    <details class="detail-section">
+      <summary class="detail-summary"><span>🌍</span> 當下行運</summary>
+      <div class="detail-body">
+        <div id="transitInfo"></div>
       </div>
     </details>
 
@@ -1847,9 +1876,79 @@ function calcNatalPlanets(utcY, utcM, utcD, utcH, lon_deg, lat_deg) {
     const pInSign = (PLANET_IN_SIGN[p.key] || [])[sigIdx] || '';
     const pInHouse = (PLANET_IN_HOUSE[p.key] || [])[house - 1] || '';
     return { key: p.key, zh: info.zh, sym: info.sym, sigSym: SIGN_SYMS_ZH[sigIdx], sigZH,
-             dms: toDMS(inSign), house, retro: p.retro,
+             lon: norm, dms: toDMS(inSign), house, retro: p.retro,
              desc: info.desc, strat: info.strat, pInSign, pInHouse };
   });
+}
+
+// ── 行運相位定義 ──
+const ASPECT_DEFS = [
+  { name:'合相', sym:'☌', angle:0,   orb:8, hard:false },
+  { name:'六合', sym:'⚹', angle:60,  orb:4, hard:false },
+  { name:'刑剋', sym:'□', angle:90,  orb:6, hard:true  },
+  { name:'三合', sym:'△', angle:120, orb:6, hard:false },
+  { name:'對分', sym:'☍', angle:180, orb:8, hard:true  },
+];
+
+// 外行星（過境影響深遠）
+const OUTER_PLANETS = new Set(['Jupiter','Saturn','Uranus','Neptune','Pluto']);
+
+function getAspect(lon1, lon2) {
+  let diff = Math.abs(lon1 - lon2) % 360;
+  if (diff > 180) diff = 360 - diff;
+  for (const a of ASPECT_DEFS) {
+    if (Math.abs(diff - a.angle) <= a.orb) {
+      return { ...a, orb: Math.abs(diff - a.angle) };
+    }
+  }
+  return null;
+}
+
+// ── 計算當下行運 ──
+function calcCurrentTransits(natalPlanets) {
+  const now = new Date();
+  const utcY = now.getUTCFullYear(), utcM = now.getUTCMonth()+1;
+  const utcD = now.getUTCDate();
+  const utcH = now.getUTCHours() + now.getUTCMinutes()/60;
+  const t = _astroTime(utcY, utcM, utcD, utcH);
+  const SIGN_ZH = ['牡羊','金牛','雙子','巨蟹','獅子','處女','天秤','天蠍','射手','魔羯','水瓶','雙魚'];
+  const SIGN_SYM = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+
+  const rawPlanets = [
+    { key:'Sun',     lon: ((Astronomy.SunPosition(t).elon % 360)+360)%360 },
+    { key:'Moon',    lon: ((Astronomy.Ecliptic(Astronomy.GeoMoon(t)).elon % 360)+360)%360 },
+  ];
+  for (const b of ['Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto']) {
+    rawPlanets.push({ key:b, lon: ((Astronomy.Ecliptic(Astronomy.GeoVector(b,t,true)).elon%360)+360)%360 });
+  }
+
+  const transitDate = new Date(Date.UTC(utcY, utcM-1, utcD));
+  const tPlanets = rawPlanets.map(p => {
+    const sigIdx = Math.floor(p.lon/30);
+    const inSign = p.lon % 30;
+    const d = Math.floor(inSign), m = Math.floor((inSign-d)*60);
+    const retro = (p.key!=='Sun'&&p.key!=='Moon') ? isRetrograde(p.key, transitDate) : false;
+    return { key:p.key, lon:p.lon, zh:PLANET_INFO[p.key]?.zh||p.key,
+             sym:PLANET_INFO[p.key]?.sym||'', sigZH:SIGN_ZH[sigIdx],
+             sigSym:SIGN_SYM[sigIdx], dms:`${d}°${String(m).padStart(2,'0')}'`,
+             retro, outer:OUTER_PLANETS.has(p.key) };
+  });
+
+  // 計算所有相位，優先顯示外行星 → 個人行星
+  const PERSONAL = new Set(['Sun','Moon','Mercury','Venus','Mars']);
+  const aspects = [];
+  for (const tp of tPlanets) {
+    for (const np of natalPlanets) {
+      const asp = getAspect(tp.lon, np.lon);
+      if (!asp) continue;
+      const priority = (OUTER_PLANETS.has(tp.key) ? 0 : 2) + (PERSONAL.has(np.key) ? 0 : 1);
+      aspects.push({ tp, np, asp, priority });
+    }
+  }
+  aspects.sort((a,b) => a.priority - b.priority || a.asp.orb - b.asp.orb);
+
+  const dateStr = `${utcY}/${String(utcM).padStart(2,'0')}/${String(utcD).padStart(2,'0')}`;
+  return { tPlanets, aspects, dateStr };
 }
 
 // ── 2026 年度行星過境預測（太陽宮位制）──
@@ -1927,8 +2026,10 @@ async function analyzeWithAI() {
 四閘門：意識太陽 ${r.hdGatePers}・意識地球 ${r.hdGateEarthPers}・潛意識太陽 ${r.hdGateDes}・潛意識地球 ${r.hdGateEarthDes}
 ${r.hdProfileKey}${r.hdCuspText ? '\n' + r.hdCuspText : ''}
 
-━━ 2026 行星過境 ━━
-木星現在在${r.jupSign}座｜土星在${r.satSign}座｜天王星在${r.urSign}座
+━━ 當下行運（${r.transitDate}）━━
+過境行星：${r.transitPlanetsStr}
+重要相位（差距由小到大）：
+${r.transitAspectsStr}
 本年度關鍵宮位：${r.forecastHighlights || '整體平穩'}
 
 ━━━━━━━━━━━━━━━━
@@ -1938,7 +2039,7 @@ ${r.hdProfileKey}${r.hdCuspText ? '\n' + r.hdCuspText : ''}
   "resonance": ["主題名稱：多系統交叉點說明+對此人的意義（至少5條）"],
   "astrology_2026": {
     "natal": "太陽、月亮、上升本命意義（各2-3句）",
-    "transit": "2026木星/土星/天王對此命盤的具體影響與時間點"
+    "transit": "根據當下行運相位（非泛論2026），說明此人今天/這週最需要注意的能量與具體建議"
   },
   "houses_2026": [
     { "house": "第X宮", "theme": "主題", "analysis": "2-3句具體說明" }
@@ -2235,6 +2336,42 @@ function calculate() {
       </div>
     `;
 
+    // 當下行運
+    const transits = calcCurrentTransits(natalPlanets);
+    const MAX_ASPECTS = 12;
+    document.getElementById('transitInfo').innerHTML = `
+      <div class="transit-date">今日天空 ${transits.dateStr}（UTC）</div>
+      <div class="transit-grid">
+        ${transits.tPlanets.map(p => `
+          <div class="transit-planet-chip">
+            <span class="transit-chip-sym">${p.sym}</span>
+            <span class="transit-chip-name">${p.zh}</span>
+            <span class="transit-chip-pos">${p.sigSym}${p.sigZH} ${p.dms}${p.retro ? '<br><span class="transit-chip-retro">逆行 R</span>' : ''}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="transit-aspects-label">重要行運相位</div>
+      ${transits.aspects.slice(0, MAX_ASPECTS).map(({ tp, np, asp }) => {
+        const cls = asp.hard ? 'hard' : 'soft';
+        const desc = asp.hard
+          ? `過境${tp.zh}的能量正在考驗你本命${np.zh}的領域，摩擦帶來成長。`
+          : `過境${tp.zh}的能量正在支持你本命${np.zh}的領域，是順勢行動的好時機。`;
+        return `
+          <div class="transit-aspect-item ${cls}">
+            <div class="transit-aspect-row">
+              <span class="transit-asp-sym ${cls}">${asp.sym}</span>
+              <span class="transit-planet-label">過境${tp.zh}</span>
+              <span class="transit-asp-name">${asp.name}</span>
+              <span class="transit-planet-label">本命${np.zh}</span>
+              <span class="transit-orb">差 ${asp.orb.toFixed(1)}°</span>
+            </div>
+            <div class="transit-aspect-desc">${desc}</div>
+          </div>
+        `;
+      }).join('')}
+      ${transits.aspects.length === 0 ? '<div style="color:var(--muted);font-size:0.8rem">目前無顯著行運相位</div>' : ''}
+    `;
+
     // 西洋星座 & 生肖（不依賴時間）
     const sun = getSunSign(month, day);
     const ani = getChineseZodiac(year, month, day);
@@ -2457,6 +2594,11 @@ function calculate() {
       jupSign: SIGN_NAMES[fc.jupIdx], satSign: SIGN_NAMES[fc.satIdx], urSign: SIGN_NAMES[fc.urIdx],
       sunSignIdx, forecastHighlights: fc.rows.filter(r => r.rating >= 5 || r.rating <= 2)
         .map(r => `第${r.num}宮（${r.theme}）：${r.notes}`).join('；'),
+      transitDate: transits.dateStr,
+      transitPlanetsStr: transits.tPlanets.map(p => `${p.zh}${p.sigZH}座${p.dms}${p.retro?' R':''}`).join('｜'),
+      transitAspectsStr: transits.aspects.slice(0,10).map(({tp,np,asp}) =>
+        `${asp.sym} 過境${tp.zh} ${asp.name} 本命${np.zh}（差${asp.orb.toFixed(1)}°，${asp.hard?'挑戰':'順流'}）`
+      ).join('\n') || '無顯著相位',
     };
 
     document.getElementById('result').style.display = 'block';
