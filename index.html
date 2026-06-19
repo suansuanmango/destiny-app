@@ -555,6 +555,13 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
 .f-stars { color: var(--accent); letter-spacing: 2px; font-size: 0.78rem; }
 .f-note { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
 
+/* ── 2026 過境標籤（本命行星卡片內） ── */
+.natal-planet-2026 { margin-top: 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.t2026-badge { font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+.t2026-good      { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.t2026-challenge { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+.t2026-change    { background: #f3e5f5; color: #6a1b9a; border: 1px solid #ce93d8; }
+
 /* ── 輪迴交叉 ── */
 .hd-cross {
   background: linear-gradient(135deg, #f8f3ec, #ede5d8);
@@ -755,13 +762,6 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
       </div>
     </details>
 
-    <!-- 折疊：年度運勢 -->
-    <details class="detail-section">
-      <summary class="detail-summary"><span>📅</span> 2026 年度運勢（十二宮）</summary>
-      <div class="detail-body">
-        <div id="forecastInfo"></div>
-      </div>
-    </details>
 
   </div>
 </div>
@@ -1575,7 +1575,7 @@ function calcPlacidusHouses(year, month, day, hour, lon_deg, lat_deg) {
       if (diff >  180) diff -= 360;
       if (diff < -180) diff += 360;
       if (Math.abs(diff) < 0.0001) break;
-      lam = ((lam - diff * 0.5) % 360 + 360) % 360;
+      lam = ((lam + diff * 0.5) % 360 + 360) % 360;
     }
     return ((lam % 360) + 360) % 360;
   }
@@ -2296,11 +2296,26 @@ function calculate() {
     const ascLon  = calcAscendant(utcY, utcM, utcD, utcH, longitude, latitude);
     const placidus = calcPlacidusHouses(utcY, utcM, utcD, utcH, longitude, latitude);
 
+    // 2026 過境行星落入本命宮位（需在本命行星渲染前計算）
+    const sun = getSunSign(month, day);
+    const ani = getChineseZodiac(year, month, day);
+    const sunSignIdx = ZODIAC.indexOf(sun);
+    const fc = calc2026Forecast(sunSignIdx);
+    const jupHouse2026 = getPlanetHouse(fc.jupLon, placidus);
+    const satHouse2026 = getPlanetHouse(fc.satLon, placidus);
+    const urHouse2026  = getPlanetHouse(fc.urLon,  placidus);
+
     // 本命行星
     const natalPlanets = calcNatalPlanets(utcY, utcM, utcD, utcH, longitude, latitude);
     document.getElementById('natalPlanetsInfo').innerHTML = `
       <div class="natal-planets">
-        ${natalPlanets.map(p => `
+        ${natalPlanets.map(p => {
+          const t2026 = [];
+          if (jupHouse2026 === p.house) t2026.push('<span class="t2026-badge t2026-good">♃ 木星 — 擴展加持</span>');
+          if (satHouse2026 === p.house) t2026.push('<span class="t2026-badge t2026-challenge">♄ 土星 — 考驗鞏固</span>');
+          if (urHouse2026  === p.house) t2026.push('<span class="t2026-badge t2026-change">♅ 天王 — 突破變革</span>');
+          const transit2026 = t2026.length ? `<div class="natal-planet-2026">2026 過境：${t2026.join('')}</div>` : '';
+          return `
           <div class="natal-planet-item">
             <div class="natal-planet-header">
               <span class="natal-planet-sym">${p.sym}</span>
@@ -2314,8 +2329,9 @@ function calculate() {
             <div class="natal-planet-insign">落${p.sigZH}座：${p.pInSign}</div>
             <div class="natal-planet-inhouse">落第${p.house}宮：${p.pInHouse}</div>
             <div class="natal-planet-strat">▸ ${p.strat}</div>
-          </div>
-        `).join('')}
+            ${transit2026}
+          </div>`;
+        }).join('')}
       </div>
     `;
 
@@ -2327,10 +2343,6 @@ function calculate() {
       : '今日無顯著行運相位，能量平穩';
     document.getElementById('transitSummary').textContent = transitSummaryText;
     document.getElementById('transitSummaryBar').style.display = 'flex';
-
-    // 西洋星座（只取太陽星座供後續用）
-    const sun = getSunSign(month, day);
-    const ani = getChineseZodiac(year, month, day);
 
     // 吠陀占星
     const today = new Date();
@@ -2434,29 +2446,6 @@ function calculate() {
     const ascDeg = (ascLon % 30).toFixed(1);
     const ascSign = ZODIAC[ascIdx];
 
-    // 年度運勢（太陽宮位制）
-    const sunSignIdx = ZODIAC.indexOf(sun);
-    const fc = calc2026Forecast(sunSignIdx);
-    const planetBadges = [
-      `木星 ${SIGN_SYMS[fc.jupIdx]}${SIGN_NAMES[fc.jupIdx]}（${fc.jupLon.toFixed(0)}°）`,
-      `土星 ${SIGN_SYMS[fc.satIdx]}${SIGN_NAMES[fc.satIdx]}（${fc.satLon.toFixed(0)}°）`,
-      `天王 ${SIGN_SYMS[fc.urIdx]}${SIGN_NAMES[fc.urIdx]}（${fc.urLon.toFixed(0)}°）`,
-    ].map(t => `<div class="forecast-planet-badge">${t}</div>`).join('');
-    const rows = fc.rows.map(r => `
-      <div class="forecast-row ${r.cls}">
-        <div class="f-house">第${r.num}宮</div>
-        <div class="f-theme">${r.theme.split('/')[0].trim()}</div>
-        ${r.notes ? `<div class="f-note">${r.notes}</div>` : ''}
-      </div>`).join('');
-    document.getElementById('forecastInfo').innerHTML = `
-      <div class="forecast-header">
-        <div class="forecast-title">2026 年 ${sun.name} 十二宮年度運勢</div>
-        <div class="forecast-subtitle">以太陽星座為第一宮起算（太陽宮位制）</div>
-      </div>
-      <div class="forecast-planet-row">${planetBadges}</div>
-      <div class="forecast-table">${rows}</div>
-    `;
-
     // 更新摘要卡片
     document.getElementById('sumSun').textContent        = sun.sym + ' ' + sun.name;
     document.getElementById('sumMoon').textContent       = ved.moonSign.sym + ' ' + ved.moonSign.name;
@@ -2509,8 +2498,8 @@ function calculate() {
       hdChannels: hd.channels.map(([a,b]) => `${a}-${b}`).join(' / '),
       ascSign: ascSign.name, ascDeg: ascLon.toFixed(1),
       jupSign: SIGN_NAMES[fc.jupIdx], satSign: SIGN_NAMES[fc.satIdx], urSign: SIGN_NAMES[fc.urIdx],
-      sunSignIdx, forecastHighlights: fc.rows.filter(r => r.rating >= 5 || r.rating <= 2)
-        .map(r => `第${r.num}宮（${r.theme}）：${r.notes}`).join('；'),
+      sunSignIdx,
+      forecastHighlights: `♃木星在第${jupHouse2026}宮（${HOUSE_INFO[jupHouse2026-1].theme.split('・')[0]}）；♄土星在第${satHouse2026}宮（${HOUSE_INFO[satHouse2026-1].theme.split('・')[0]}）；♅天王在第${urHouse2026}宮（${HOUSE_INFO[urHouse2026-1].theme.split('・')[0]}）`,
       transitDate: transits.dateStr,
       transitPlanetsStr: transits.tPlanets.map(p => `${p.zh}${p.sigZH}座${p.dms}${p.retro?' R':''}`).join('｜'),
       transitAspectsStr: transits.aspects.slice(0,10).map(({tp,np,asp}) =>
