@@ -1551,23 +1551,6 @@ function calcPlacidusHouses(year, month, day, hour, lon_deg, lat_deg) {
   ];
 }
 
-// ── 行星黃道位置（Meeus 簡化 VSOP87，~2° 精度）──
-const PLANET_EL = {
-  Jupiter: { L0:34.3515,  L1:3034.9057, e:0.0489, w0:14.33,  w1:0.1507 },
-  Saturn:  { L0:50.0774,  L1:1222.1138, e:0.0557, w0:93.06,  w1:0.3395 },
-  Uranus:  { L0:314.0550, L1:428.4882,  e:0.0472, w0:173.01, w1:0.0   },
-};
-function getPlanetLon(planet, year, month, day, hour) {
-  const JD = julday(year, month, day, hour);
-  const T  = (JD - 2451545.0) / 36525.0;
-  const r  = Math.PI / 180;
-  const d  = PLANET_EL[planet];
-  const L  = ((d.L0 + d.L1 * T) % 360 + 360) % 360;
-  const w  = d.w0 + d.w1 * T;
-  const M  = ((L - w) % 360 + 360) % 360;
-  const C  = (180 / Math.PI) * ((2 * d.e - d.e ** 3 / 4) * Math.sin(M * r) + 1.25 * d.e ** 2 * Math.sin(2 * M * r));
-  return ((w + M + C) % 360 + 360) % 360;
-}
 
 // ── 十二宮主題（Whole Sign）──
 const HOUSE_THEMES = [
@@ -1577,12 +1560,14 @@ const HOUSE_THEMES = [
 ];
 
 // ── 2026 年度行星過境預測（太陽宮位制）──
+function _bodyLon(body) {
+  const t = _astroTime(new Date().getUTCFullYear(), new Date().getUTCMonth()+1, new Date().getUTCDate(), 12);
+  return ((Astronomy.Ecliptic(Astronomy.GeoVector(body, t, true)).elon % 360) + 360) % 360;
+}
 function calc2026Forecast(sunSignIdx) {
-  const now = new Date();
-  const y = now.getFullYear(), m = now.getMonth()+1, dd = now.getDate();
-  const jupLon = getPlanetLon('Jupiter', y, m, dd, 12);
-  const satLon = getPlanetLon('Saturn',  y, m, dd, 12);
-  const urLon  = getPlanetLon('Uranus',  y, m, dd, 12);
+  const jupLon = _bodyLon('Jupiter');
+  const satLon = _bodyLon('Saturn');
+  const urLon  = _bodyLon('Uranus');
   const jupIdx = Math.floor(jupLon / 30);
   const satIdx = Math.floor(satLon / 30);
   const urIdx  = Math.floor(urLon / 30);
