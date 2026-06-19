@@ -441,6 +441,21 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
 .hd-ch-desc { font-size: 0.74rem; color: var(--muted); line-height: 1.5; }
 .hd-ch-strat { font-size: 0.72rem; color: #0d7a5f; background: #e8f7f3; border-radius: 6px; padding: 5px 9px; margin-top: 6px; line-height: 1.55; }
 
+/* ── 本命行星 ── */
+.natal-planets { display: flex; flex-direction: column; gap: 10px; }
+.natal-planet-item { background: var(--light); border-radius: 10px; padding: 12px 14px; }
+.natal-planet-header { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.natal-planet-sym { font-size: 1.15rem; color: var(--primary); }
+.natal-planet-name { font-family: 'Noto Serif TC', serif; font-size: 1rem; font-weight: 700; color: var(--primary); }
+.natal-planet-sign { font-size: 0.88rem; color: var(--accent); font-weight: 500; }
+.natal-planet-deg  { font-size: 0.8rem; color: var(--muted); }
+.natal-planet-retro { font-size: 0.72rem; color: #c0392b; background: #fdf0ee; border-radius: 4px; padding: 1px 5px; font-weight: 600; }
+.natal-planet-house { font-size: 0.78rem; color: #fff; background: var(--primary); border-radius: 10px; padding: 1px 8px; margin-left: auto; }
+.natal-planet-desc { font-size: 0.73rem; color: var(--muted); line-height: 1.55; margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 6px; }
+.natal-planet-insign { font-size: 0.72rem; color: #5b5f97; background: #eeeffe; border-radius: 6px; padding: 4px 8px; margin-top: 5px; line-height: 1.5; }
+.natal-planet-inhouse { font-size: 0.72rem; color: #6a5200; background: #fdf6e3; border-radius: 6px; padding: 4px 8px; margin-top: 4px; line-height: 1.5; }
+.natal-planet-strat { font-size: 0.72rem; color: #0d7a5f; background: #e8f7f3; border-radius: 6px; padding: 5px 9px; margin-top: 4px; line-height: 1.55; }
+
 /* ── 生命靈數 ── */
 .nums-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .num-card { background: var(--light); border-radius: 10px; padding: 14px 8px; text-align: center; }
@@ -675,6 +690,14 @@ details[open] .detail-summary::after { transform: rotate(90deg); }
           <div class="detail-sub-title">東方靈數 — 幸運數字</div>
           <div id="easternNumsInfo"></div>
         </div>
+      </div>
+    </details>
+
+    <!-- 折疊：本命行星 -->
+    <details class="detail-section">
+      <summary class="detail-summary"><span>🪐</span> 本命行星</summary>
+      <div class="detail-body">
+        <div id="natalPlanetsInfo"></div>
       </div>
     </details>
 
@@ -1472,6 +1495,7 @@ function calcAscendant(year, month, day, hour, longitude, latitude) {
   const phi  = latitude * r;
   const RAMC = LST * r;
   let asc = Math.atan2(-Math.cos(RAMC), Math.sin(eps) * Math.tan(phi) + Math.cos(eps) * Math.sin(RAMC)) / r;
+  if (LST > 90 && LST <= 270) asc += 180;
   return (asc % 360 + 360) % 360;
 }
 
@@ -1495,6 +1519,7 @@ function calcPlacidusHouses(year, month, day, hour, lon_deg, lat_deg) {
   // ASC
   let ASC = Math.atan2(-Math.cos(RAMC * r),
     Math.sin(eps * r) * Math.tan(phi * r) + Math.cos(eps * r) * Math.sin(RAMC * r)) / r;
+  if (RAMC > 90 && RAMC <= 270) ASC += 180;
   ASC = ((ASC % 360) + 360) % 360;
 
   const IC  = (MC  + 180) % 360;
@@ -1558,6 +1583,274 @@ const HOUSE_THEMES = [
   '創意 / 戀愛', '健康 / 工作', '婚姻 / 合作', '轉化 / 共財',
   '哲學 / 旅行', '事業 / 名聲', '人脈 / 理想', '靈性 / 隱藏',
 ];
+
+// ── 本命行星資料 ──
+const PLANET_INFO = {
+  Sun:     { zh:'太陽', sym:'☉', desc:'代表你的核心自我、生命力與意識身份。太陽星座是你有意識地活出自我的方式，也是你在世界上留下印記的核心驅動力。', strat:'問自己：「這件事能讓我閃耀嗎？」把能量投注在能展現你真實自我的舞台上，不要為了討好他人而縮小自己。' },
+  Moon:    { zh:'月亮', sym:'☽', desc:'代表情感世界、潛意識反應與深層需求。月亮揭示你在安全感受威脅時的本能反應，以及你在親密關係中真正渴望的滋養方式。', strat:'留意自己情緒起伏的規律，不要壓抑或假裝沒感覺。給自己創造情感安全的空間，在那裡你才能真正充電。' },
+  Mercury: { zh:'水星', sym:'☿', desc:'代表思維模式、溝通方式與資訊處理能力。水星決定你如何學習、如何表達想法，以及你的語言和邏輯風格。', strat:'善用你的表達優勢——寫作、演講、教學都是你的舞台。學習在溝通前先整理思路，你的話說出去的份量遠比你以為的大。' },
+  Venus:   { zh:'金星', sym:'♀', desc:'代表愛情觀、審美品味與你在關係中給予和接受的方式。金星也揭示你對美、舒適與物質享受的偏好。', strat:'清楚知道你在關係中真正重視什麼，不要為了維持和諧而委屈自己。定期讓自己沉浸在美好事物中，這是你補充能量的必要管道。' },
+  Mars:    { zh:'火星', sym:'♂', desc:'代表行動力、慾望、競爭本能與追求目標的方式。火星揭示你如何面對衝突、如何激勵自己，以及你在性與競爭上的驅動模式。', strat:'把火星的能量用在值得的目標上，不要在無謂的摩擦中燃燒。當憤怒升起時，先釐清它背後的真正需求，再決定如何行動。' },
+  Jupiter: { zh:'木星', sym:'♃', desc:'代表擴張、機遇、信仰體系與幸運方向。木星所在的領域是你人生中自然獲得祝福與成長的區域，也是過度擴張的風險區。', strat:'木星帶來的機遇往往需要你先踏出一步才會降臨。在木星所在的宮位主動探索、投資自己，同時注意不要過度擴張。' },
+  Saturn:  { zh:'土星', sym:'♄', desc:'代表限制、責任、紀律與長期功課。土星所在之處是你人生中需要付出最多努力的領域，但也是最終能建立最深厚基礎的地方。', strat:'不要逃避土星課題，直面它，一步一步建立。土星的時間線很長，不要因為短期沒有回報就放棄——這正是它在測試你的地方。' },
+  Uranus:  { zh:'天王星', sym:'♅', desc:'代表革新、突破、自由渴望與不可預測的變化。天王星揭示你在哪個生命領域渴望打破常規，以及集體革新能量如何影響你這一代人。', strat:'擁抱天王星帶來的變化，即使它令你不安。它打破的往往是你其實早就準備好要離開的東西。讓自己在這個領域活得更獨特。' },
+  Neptune: { zh:'海王星', sym:'♆', desc:'代表靈性、直覺、夢想與幻象。海王星揭示你在哪個領域擁有最深的靈感與同理心，也揭示你最容易自我欺騙或理想化的地方。', strat:'在海王星的領域，學習分辨靈感與逃避。定期讓自己沉浸在藝術、靈性或冥想中，但要記得回到現實落地執行。' },
+  Pluto:   { zh:'冥王星', sym:'♇', desc:'代表深層轉化、權力動態與重生。冥王星所在之處是你人生中會經歷最深刻蛻變的領域，往往透過破壞舊有結構來催生新的自我。', strat:'當冥王星的領域出現危機，不要抵抗——讓舊的死去。真正的力量來自於接受轉化，而非握住不放。' },
+};
+
+const PLANET_IN_SIGN = {
+  Sun:     ['身份認同建立在行動上','物質安全感驅動一切','思維清晰是你的自信','以和諧定義自我','戲劇性自我表達','以服務彰顯自我','以關係映照自我','深度與強度是你的核心','真理探尋者','責任感即自我','以理念定義身份','以無邊界感知自我'],
+  Moon:    ['情感衝動直接','安全感來自物質穩定','需要多元刺激','對家的渴望強烈','需要被欣賞肯定','焦慮型照顧者','情感需要平衡','情感極度深刻','情感自由奔放','情感克制內斂','情感疏離理智','情感高度敏感'],
+  Mercury: ['快速直接','緩慢但精確','多線並行','直覺式思考','戲劇化表達','細節導向批判','追求公平邏輯','深度調查型','宏觀哲學式','結構性務實','革命性洞見','模糊聯想型'],
+  Venus:   ['直接追求','感官享受型','多元喜好','滋養型愛情','戲劇浪漫','精緻挑剔','需要平等伴侶','強烈深刻佔有','自由哲學愛情','現實長遠承諾','友誼型愛情','無邊界的愛'],
+  Mars:    ['衝動立即行動','緩慢堅定執行','分散多向行動','保護型防禦性','霸氣主導型','精確分析行動','策略型行動','強烈徹底執行','冒險突破型','耐力型征服','革命性行動','感知型行動'],
+  Jupiter: ['冒險擴張','物質豐盛','知識擴展','家族傳承','創意豐盛','服務性成長','關係中成長','深度轉化成長','旅行哲學擴張','事業名聲成長','社會理想成長','靈性精神成長'],
+  Saturn:  ['身份認同課題','物質安全課題','溝通學習課題','家庭根源課題','創意表達課題','健康工作課題','關係承諾課題','控制信任課題','信仰意義課題','責任紀律課題','社群理想課題','靈性界線課題'],
+  Uranus:  ['自我革命','財務突破','溝通革新','家庭打破傳統','創意突破','工作模式革新','關係形式突破','深層轉化革命','信仰系統革命','事業顛覆革新','社群理想革命','靈性覺醒突破'],
+  Neptune: ['自我溶解','物質幻象','思維模糊直覺','家的理想化','創意靈感','健康療癒直覺','關係理想化','深層靈性融合','信仰與幻想','事業使命感','社會願景理想','靈性完全融合'],
+  Pluto:   ['自我徹底重建','財務控制轉化','溝通的權力動態','家族業力轉化','創意深層轉化','工作徹底變革','關係權力動態','深層蛻變核心','信仰系統崩潰重建','事業權力轉化','社群結構革命','靈性死亡重生'],
+};
+
+const PLANET_IN_HOUSE = {
+  Sun: [
+    '個人特質與外表風格深刻影響他人的第一印象，活得真實就是最大的磁場。',
+    '身份認同與財務緊密相連，透過創造真實價值來肯定自我。',
+    '以語言和思想展現自我，表達力是你最重要的個人品牌。',
+    '家庭與根源是你能量的來源，私下的世界才是你真實自我的居所。',
+    '透過創意、愛情與娛樂讓自我發光，你需要一個展示才華的舞台。',
+    '日常工作與健康習慣是你活出自我的核心，在服務中找到存在意義。',
+    '透過伴侶關係映照自我，你在「我們」中才能真正發現「我是誰」。',
+    '深層轉化與危機是你的成長引擎，在黑暗中你找到最真實的自我。',
+    '哲學探索、旅行與高等教育是你活出自我的途徑，你渴望更寬廣的視野。',
+    '事業與公眾形象是你展現自我的核心舞台，你天生渴望在社會留下印記。',
+    '社群、理想與人脈是你發光的場域，你在集體中找到個人使命。',
+    '你的真實自我需要在隱退與獨處中才能顯現，靈性探索是你最深的驅動。',
+  ],
+  Moon: [
+    '情感反應直接影響外在形象，情緒需求也容易被他人看見。',
+    '物質與金錢帶給你安全感，情感滋養往往與舒適的物質環境連結。',
+    '透過溝通與學習獲得情感滿足，需要大量交流來處理內在情緒。',
+    '家庭是你最核心的情感堡壘，你天生渴望建立一個能讓你完全放鬆的家。',
+    '你需要在愛情與創意中感受到情感滿足，孩子或創作能深深觸動你的內心。',
+    '健康習慣與工作環境直接影響你的情緒狀態，身體的感覺是情緒的晴雨表。',
+    '你在伴侶關係中尋求情感安全，深刻需要一個能接住你情緒的人。',
+    '深層情感往往隱藏不外露，你可能將強烈情感轉化為心理探索或靈性成長。',
+    '你的情感在旅行、探索與哲學思考中得到滋養，開放的世界讓你內心安定。',
+    '情緒容易受外在社會評價影響，事業上的成就感是你情感穩定的來源之一。',
+    '你在友誼與社群連結中獲得情感支持，群體歸屬感對你的安全感至關重要。',
+    '你的情感生活相對隱秘，需要大量獨處時間才能真正恢復情感能量。',
+  ],
+  Mercury: [
+    '你的表達方式直接影響給人的第一印象，言語和舉止風格極具個人標誌性。',
+    '你習慣在開口前仔細思量，思維謹慎實際，特別擅長財務與價值相關的分析。',
+    '思維活躍、表達流暢，天生具備溝通才能，擅長學習新事物和傳遞資訊。',
+    '你的思維深受家庭記憶與情感影響，直覺式的思考往往比邏輯分析更可靠。',
+    '你的表達充滿創意與戲劇性，天生是說故事的人，語言具有吸引眾人目光的力量。',
+    '思維細膩精確，擅長分析問題，在工作中的溝通效率是你最大的職場優勢。',
+    '你善於傾聽與平衡對話，在談判和協調中表現出色，言語具有外交藝術。',
+    '思維深刻，擅長挖掘表面之下的真相，你的研究力和調查本能非常強。',
+    '你的思維宏觀開放，擅長跨文化溝通，哲學性的思考方式讓你能看到更大的格局。',
+    '你的言語在職場與公眾場合最為有力，擅長以清晰的語言建立專業權威形象。',
+    '你的思維創新前衛，擅長在人際網絡中傳播想法，是理念的傳播者。',
+    '思維偏向靈性與直覺，擅長捕捉潛意識訊息，夢境與藝術是你的靈感來源。',
+  ],
+  Venus: [
+    '美感與魅力是你天生的外在資產，你的存在本身就能吸引他人。',
+    '你在物質享受與感官美學中找到最大的愉悅，財務上的舒適是你的安全感來源。',
+    '你在溝通與社交互動中感受到愛，多元的關係與輕鬆的交流讓你快樂。',
+    '你最深的愛落在家庭與私人領域，你渴望建立一個充滿美感與溫暖的家。',
+    '你的愛情充滿熱情與戲劇性，你需要在關係中被欣賞、被崇拜。',
+    '你在服務他人與精緻的日常中找到美感，健康習慣的質感對你很重要。',
+    '關係是你人生的核心，你天生具有創造和諧、讓雙方都感到愉悅的能力。',
+    '你的愛強烈深刻，渴望靈魂層面的合而為一，情感的佔有慾也相對強烈。',
+    '你在旅行、文化探索與思想交流中找到美感，具有哲學性的愛情觀。',
+    '你在事業與社交場合中展現魅力，良好的公眾形象對你的自信很重要。',
+    '你在友誼與社群網絡中感受到愛，理念相近的群體是你最重要的歸屬。',
+    '你的美感靈感來自靈性與夢境，你可能在藝術或精神追求中找到最深的滿足。',
+  ],
+  Mars: [
+    '行動力強，做事積極主動，你的衝勁與外在存在感讓人印象深刻。',
+    '你在積累財富與物質上具有強大的驅動力，一旦決定要的東西就不輕易放棄。',
+    '你的表達充滿力量，辯論能力強，思維敏捷，言語有時直接帶刺。',
+    '你對家庭與根源的保護欲強，會積極採取行動確保家的安全與穩定。',
+    '你在創意、戀愛與競技中最有戰鬥力，你喜歡在有舞台的地方展現自己。',
+    '你是強大的執行者，工作效率高，對健康與身體狀態的管理充滿鬥志。',
+    '你在關係中可能帶來較多摩擦，但這也讓你的伴侶關係充滿張力與熱情。',
+    '你的意志力與慾望深藏於內，一旦啟動難以阻擋，擅長在危機中採取行動。',
+    '你喜歡在探索新領域、旅行或學術競爭中燃燒行動力，冒險是你的燃料。',
+    '你在職場中具有強烈的競爭意識，渴望在事業上取得成就，不甘居於人後。',
+    '你的行動力用在推動社會理想與集體目標上，是集體運動的推進器。',
+    '你的行動力深受直覺與靈性驅動，有時衝動難以解釋，卻往往指向正確方向。',
+  ],
+  Jupiter: [
+    '你天生具有個人魅力與開創運氣，主動出擊往往帶來意想不到的好機遇。',
+    '財務上有擴展的潛力，對物質豐盛抱有正向信念，也要注意過度消費的傾向。',
+    '你在學習、溝通與寫作上有幸運加持，語言才能是你擴展影響力的最大資產。',
+    '家庭與根源帶給你深厚的支持與祝福，你的成長多受家庭文化薰陶。',
+    '你在創意表達、愛情與孩子相關領域有豐盛體驗，享樂與創作是你的天賦幸運。',
+    '健康與工作是你的擴展領域，在服務他人的事業中往往能得到豐盛的回報。',
+    '伴侶關係為你帶來擴展機會，你的另一半往往在視野或文化上豐富了你的世界。',
+    '你在財務投資、心理探索或靈性修行上有成長的祝福，轉化帶來更大的豐盛。',
+    '旅行、高等教育與哲學思考是你人生中最豐盛的領域，世界愈大你愈快樂。',
+    '事業是你最大的擴展舞台，社會地位與成就隨著努力自然累積，是典型的成功者能量。',
+    '你在社群、人際網絡與集體理想中獲得豐盛，廣泛的人脈是你最大的資產。',
+    '靈性探索、慈善事業與隱退反思為你帶來深層的意義感與幸運。',
+  ],
+  Saturn: [
+    '自我形象與外在表現需要長時間磨練，可能在早年感到不自信，中年後越來越有型。',
+    '財務與物質安全是你一生的修煉課題，需要建立紀律性的財務習慣才能真正穩定。',
+    '溝通與學習帶有嚴格的自我要求，可能在表達上遲疑，但你說的話往往很有份量。',
+    '家庭結構嚴格或帶有壓力，需要花時間療癒家族課題，才能建立屬於自己的安全感。',
+    '創意與愛情受到自我壓抑，過度的完美主義可能阻礙你享受生命的輕盈。',
+    '工作紀律強，你比任何人都清楚健康管理的重要性，但也要學會在效率之外休息。',
+    '關係是你的嚴格課題，你可能在承諾上遲疑，但一旦決定就非常認真長久。',
+    '深層轉化是你最艱難也最深刻的課題，你在放手與掌控之間找到生命的深度。',
+    '你對信仰與意義有嚴格要求，不輕易接受表面答案，需要在人生閱歷中慢慢建立智慧。',
+    '事業是你一生的嚴格考場，但也是你最終能建立最扎實成就的地方。',
+    '社群與人際網絡帶有課題，你可能感到孤獨或格格不入，但你最終的連結都經得起考驗。',
+    '內心世界充滿深重的責任感，需要刻意練習放下，才能讓靈性的輕盈進入生命。',
+  ],
+  Uranus: [
+    '你的個人風格或人生方向可能突然巨變，不按牌理出牌是你的標誌。',
+    '財務狀況可能大起大落，需要保持靈活彈性，不要把全部安全感放在單一收入上。',
+    '你的思維與溝通方式充滿突破性，天生是革命性的傳播者與概念創新者。',
+    '家庭結構充滿不穩定或獨特性，你可能以非傳統方式定義「家」的概念。',
+    '你的創意超越時代，在愛情與孩子相關議題上有獨特甚至顛覆性的想法。',
+    '你可能以非傳統方式工作，在健康管理上也喜歡嘗試不同於主流的方法。',
+    '你渴望在關係中保持個人自由，不傳統的伴侶關係模式對你更合適。',
+    '你對權力與深層轉化有革命性的洞見，可能在危機中以出人意料的方式突破。',
+    '你的世界觀超前，對宗教、文化與哲學有顛覆性的詮釋，喜歡探索邊界。',
+    '你的事業走向難以預測但往往充滿突破，傳統職涯路徑不適合你。',
+    '你是社群革新的推動者，在群體理想與科技進步上是重要的催化力量。',
+    '你的靈性覺醒往往以突然、顛覆性的方式降臨，打破你原有的世界觀。',
+  ],
+  Neptune: [
+    '你的外在形象充滿神秘感與靈性氣質，讓人難以完全捉摸，卻又被你深深吸引。',
+    '你對金錢的感知比較模糊，容易在財務上過於理想化，需要實際的財務紀律作為平衡。',
+    '思維與溝通方式充滿想像力，擅長隱喻與詩意表達，但有時缺乏邏輯清晰度。',
+    '你的家庭氛圍充滿靈性感或模糊的界線，可能在家庭角色上有理想化或逃避的傾向。',
+    '你的創意才能帶有強烈的靈感與神秘色彩，藝術表達是你靈魂最直接的出口。',
+    '你對健康有靈性化的詮釋，能量療癒或身心整合是你最有共鳴的照護方式。',
+    '你在關係中傾向理想化對方，要注意界線模糊帶來的失望與自我犧牲。',
+    '你對深層心理與靈魂有天生的感知，能在他人看不到的地方感受到精神的流動。',
+    '你的信仰系統充滿靈性與神秘，對宗教或形上學的探索是你人生意義的核心。',
+    '你在事業上可能有崇高的使命感，但也要注意現實執行面的落差與自我欺騙的風險。',
+    '你在集體理想與社會願景上充滿靈感，是群體中的精神共鳴場與感知天線。',
+    '靈性探索是你天生的領域，你的直覺、夢境與冥想體驗比任何人都更深邃。',
+  ],
+  Pluto: [
+    '你的個人魅力充滿深度與強度，對人有難以言說的吸引力，自我轉化是你一生的主題。',
+    '財務是你一生深層轉化的戰場，可能經歷極度的匱乏與豐盛，最終掌握資源的真正力量。',
+    '你的語言和思想具有深刻的穿透力，能說出他人不敢說的真相，也可能承受因言惹禍。',
+    '家族業力深刻，你帶著前人留下的深層議題，也是打破家族舊有模式的那個人。',
+    '你在創意與愛情中的深度體驗超越常人，你需要的不是輕盈，而是靈魂的震撼。',
+    '你在工作中有深刻的轉化力量，能讓整個系統或組織產生根本性的改變。',
+    '你在伴侶關係中的深度與強度無人能敵，也因此容易遭遇控制與反控制的課題。',
+    '轉化、死亡與重生是你人生的核心主題，你比任何人都了解「失去」的深層意義。',
+    '你對信仰與世界觀有強烈的顛覆性，可能在某個人生轉折點完全更換自己的信仰系統。',
+    '事業對你而言不只是工作，而是權力、影響力與社會轉化的戰場。',
+    '你對集體力量有深刻的感知，是社會轉型與革命運動中不可忽視的力量。',
+    '你的靈性修行充滿深度轉化，透過絕對的臣服與死亡意象，觸及最深的重生體驗。',
+  ],
+};
+
+const HOUSE_INFO = [
+  { theme:'自我・外表・開始', desc:'第1宮代表你的身體外貌、個人風格與面對世界的第一道門面。這裡是你開創新事物的起點，也是他人對你形成第一印象的地方。', strat:'留意你給人的第一印象是否真實反映了你的本質。這個宮位的行星提醒你：你的身體與外在風格，就是你最強大的個人品牌。' },
+  { theme:'財務・價值・資源', desc:'第2宮代表你的財務狀況、個人資產與你對「什麼有價值」的認知。這裡也揭示你的自我價值感與對物質安全感的需求模式。', strat:'理解這個宮位行星的能量，就能理解你與金錢的關係根源。財務困境往往反映更深層的自我價值問題，從裡面著手。' },
+  { theme:'溝通・學習・環境', desc:'第3宮代表你的思維方式、日常溝通模式與近距離環境（鄰居、手足、短途旅行）。這裡揭示你如何處理資訊，以及你的學習風格。', strat:'你在日常溝通中散發的能量就是這個宮位行星的展現。留意你與周遭環境互動的方式，那是你學習與成長速度最直接的槓桿。' },
+  { theme:'家庭・根源・內在', desc:'第4宮代表你的家庭起源、童年環境與你在內心世界中感到安全的事物。這裡是你人生地基的所在，也是最私密、最真實的自我。', strat:'了解這個宮位讓你理解自己為何有某些情感模式。療癒家庭課題，等於鞏固你整個人生的地基。' },
+  { theme:'創意・愛情・展現', desc:'第5宮代表你的創意表達、戀愛風格、娛樂享受與對孩子的態度。這裡是你的快樂源泉，是你自然而然想要閃耀的地方。', strat:'讓這個宮位的行星能量自由流動，就是讓你的生命力恢復。在創意、愛情或遊戲中投注時間，不是浪費，而是充電。' },
+  { theme:'健康・工作・服務', desc:'第6宮代表你的日常工作習慣、健康管理與服務他人的方式。這裡揭示你如何維持身心的運作，以及你在職場中的實際工作風格。', strat:'注意這個宮位行星帶來的健康訊息，它往往是身體對你的提醒。建立穩定的日常習慣，讓這個宮位的能量成為你的日常基礎。' },
+  { theme:'婚姻・合作・對立', desc:'第7宮代表你的伴侶關係、重要合作對象，以及你在公開場合面對他人的方式。這裡也揭示你在對立或競爭關係中的模式。', strat:'這個宮位的行星往往投射在你吸引的伴侶或合作者身上。了解它，就能更清楚你在關係中尋找什麼，以及你需要整合什麼。' },
+  { theme:'轉化・共財・危機', desc:'第8宮代表深層轉化、共同財務、性、死亡與重生的主題。這裡是你生命中最深刻蛻變發生的地方，也是你與他人共享能量與資源的領域。', strat:'這個宮位的課題不好受，但最能帶來成長。直面第8宮行星的主題，你會發現自己比想像中更有力量處理人生的黑暗面。' },
+  { theme:'哲學・旅行・意義', desc:'第9宮代表你的信仰體系、高等教育、長途旅行與對人生意義的追尋。這裡揭示你如何理解更大的宇宙秩序，以及你的心靈擴展方向。', strat:'這個宮位呼喚你走出舒適圈，去擴展視野。旅行、求學或鑽研哲學，都是讓這個宮位能量發光的方式。' },
+  { theme:'事業・名聲・成就', desc:'第10宮代表你的職業成就、社會地位與在世界上留下的印記。這裡是你最公開的人生面向，也是你努力積累、尋求被社會認可的地方。', strat:'這個宮位的行星揭示你在職場上的天賦與挑戰。找到真正讓你有使命感的事業方向，才是第10宮最大的成功。' },
+  { theme:'人脈・理想・友誼', desc:'第11宮代表你的友誼網絡、社群歸屬、未來理想與集體夢想。這裡揭示你在群體中的角色，以及你如何透過人際連結實現更大的願景。', strat:'你在群體中能給予與接受的能量，就是這個宮位行星的體現。找到你真正認同的社群，你的夢想會在那裡找到共鳴與實現的土壤。' },
+  { theme:'靈性・隱藏・業力', desc:'第12宮代表潛意識、靈性修行、業力課題與你自我隔離的模式。這是最深邃也最神秘的宮位，揭示你不為人知的內在世界與靈魂功課。', strat:'第12宮的行星能量需要在獨處、冥想或創作中才能安全流動。不要害怕進入這個宮位的深處，它藏著你最珍貴的靈魂禮物。' },
+];
+
+// 逆行偵測（前後各 12 小時比較黃道移動方向）
+function isRetrograde(body, birthDate) {
+  const d1 = new Date(birthDate.getTime() - 12 * 3600000);
+  const d2 = new Date(birthDate.getTime() + 12 * 3600000);
+  const t1 = Astronomy.MakeTime(d1);
+  const t2 = Astronomy.MakeTime(d2);
+  const lon1 = ((Astronomy.Ecliptic(Astronomy.GeoVector(body, t1, true)).elon % 360) + 360) % 360;
+  const lon2 = ((Astronomy.Ecliptic(Astronomy.GeoVector(body, t2, true)).elon % 360) + 360) % 360;
+  let diff = lon2 - lon1;
+  if (diff > 180) diff -= 360;
+  if (diff < -180) diff += 360;
+  return diff < 0;
+}
+
+// 行星落入宮位（給定黃道經度 + cusps 陣列）
+function getPlanetHouse(lon, cusps) {
+  const norm = ((lon % 360) + 360) % 360;
+  for (let i = 0; i < 12; i++) {
+    const start = cusps[i];
+    const end   = cusps[(i + 1) % 12];
+    if (start <= end) {
+      if (norm >= start && norm < end) return i + 1;
+    } else {
+      if (norm >= start || norm < end) return i + 1;
+    }
+  }
+  return 1;
+}
+
+// 計算本命行星完整資料
+function calcNatalPlanets(utcY, utcM, utcD, utcH, lon_deg, lat_deg) {
+  const birthDate = new Date(Date.UTC(utcY, utcM - 1, utcD, Math.floor(utcH), Math.round((utcH % 1) * 60)));
+  const t = _astroTime(utcY, utcM, utcD, utcH);
+  const cusps = calcPlacidusHouses(utcY, utcM, utcD, utcH, lon_deg, lat_deg);
+
+  const sunLon = ((Astronomy.SunPosition(t).elon % 360) + 360) % 360;
+  const moonLon = ((Astronomy.Ecliptic(Astronomy.GeoMoon(t)).elon % 360) + 360) % 360;
+  const T = t.tt / 36525.0;
+  const nnLon = ((((125.04452 - 1934.136261 * T + 0.0020708 * T * T) % 360) + 360) % 360);
+
+  const planets = [
+    { key: 'Sun',     lon: sunLon,  retro: false },
+    { key: 'Moon',    lon: moonLon, retro: false },
+    { key: 'Mercury', lon: 0, retro: false },
+    { key: 'Venus',   lon: 0, retro: false },
+    { key: 'Mars',    lon: 0, retro: false },
+    { key: 'Jupiter', lon: 0, retro: false },
+    { key: 'Saturn',  lon: 0, retro: false },
+    { key: 'Uranus',  lon: 0, retro: false },
+    { key: 'Neptune', lon: 0, retro: false },
+    { key: 'Pluto',   lon: 0, retro: false },
+  ];
+
+  for (const p of planets) {
+    if (p.key === 'Sun' || p.key === 'Moon') continue;
+    p.lon = ((Astronomy.Ecliptic(Astronomy.GeoVector(p.key, t, true)).elon % 360) + 360) % 360;
+    p.retro = isRetrograde(p.key, birthDate);
+  }
+
+  const SIGN_NAMES_ZH = ['牡羊','金牛','雙子','巨蟹','獅子','處女','天秤','天蠍','射手','魔羯','水瓶','雙魚'];
+  const SIGN_SYMS_ZH  = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+  const toDMS = (deg) => {
+    const d = Math.floor(deg), m = Math.floor((deg - d) * 60);
+    const s = Math.round(((deg - d) * 60 - m) * 60);
+    return `${d}°${String(m).padStart(2,'0')}'${String(s).padStart(2,'0')}"`;
+  };
+
+  return planets.map(p => {
+    const norm  = ((p.lon % 360) + 360) % 360;
+    const sigIdx = Math.floor(norm / 30);
+    const inSign = norm % 30;
+    const house  = getPlanetHouse(norm, cusps);
+    const info   = PLANET_INFO[p.key];
+    const signKey = ['牡羊','金牛','雙子','巨蟹','獅子','處女','天秤','天蠍','射手','魔羯','水瓶','雙魚'];
+    const sigZH  = signKey[sigIdx];
+    const pInSign = (PLANET_IN_SIGN[p.key] || [])[sigIdx] || '';
+    const pInHouse = (PLANET_IN_HOUSE[p.key] || [])[house - 1] || '';
+    return { key: p.key, zh: info.zh, sym: info.sym, sigSym: SIGN_SYMS_ZH[sigIdx], sigZH,
+             dms: toDMS(inSign), house, retro: p.retro,
+             desc: info.desc, strat: info.strat, pInSign, pInHouse };
+  });
+}
 
 // ── 2026 年度行星過境預測（太陽宮位制）──
 function _bodyLon(body) {
@@ -1918,6 +2211,29 @@ function calculate() {
     const hd      = calcHumanDesign(utcY, utcM, utcD, utcH, 0);
     const ascLon  = calcAscendant(utcY, utcM, utcD, utcH, longitude, latitude);
     const placidus = calcPlacidusHouses(utcY, utcM, utcD, utcH, longitude, latitude);
+
+    // 本命行星
+    const natalPlanets = calcNatalPlanets(utcY, utcM, utcD, utcH, longitude, latitude);
+    document.getElementById('natalPlanetsInfo').innerHTML = `
+      <div class="natal-planets">
+        ${natalPlanets.map(p => `
+          <div class="natal-planet-item">
+            <div class="natal-planet-header">
+              <span class="natal-planet-sym">${p.sym}</span>
+              <span class="natal-planet-name">${p.zh}</span>
+              <span class="natal-planet-sign">${p.sigSym} ${p.sigZH}座</span>
+              <span class="natal-planet-deg">${p.dms}</span>
+              ${p.retro ? '<span class="natal-planet-retro">逆行 R</span>' : ''}
+              <span class="natal-planet-house">第 ${p.house} 宮</span>
+            </div>
+            <div class="natal-planet-desc">${p.desc}</div>
+            <div class="natal-planet-insign">落${p.sigZH}座：${p.pInSign}</div>
+            <div class="natal-planet-inhouse">落第${p.house}宮：${p.pInHouse}</div>
+            <div class="natal-planet-strat">▸ ${p.strat}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
 
     // 西洋星座 & 生肖（不依賴時間）
     const sun = getSunSign(month, day);
